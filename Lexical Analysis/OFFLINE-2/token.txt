@@ -38,7 +38,6 @@
 <CHAR, char>
 <ID, ch>
 <ASSIGNOP, =>
-<CONST_CHAR,z'>
 <SEMICOLON, ;>
 <ID, ch>
 <ASSIGNOP, =>

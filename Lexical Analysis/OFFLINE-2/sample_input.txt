@@ -7,7 +7,7 @@ void main() {
 	f = f - 3.14;
 	f = f * 2.81E0;
 	
-	char ch = 'z';
+	char ch = '\tz';
 	ch = '\t';
 	
 	char str[] = "hello\tworld";

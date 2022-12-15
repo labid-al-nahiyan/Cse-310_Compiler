@@ -16,7 +16,7 @@
 using namespace std;
 typedef long long ll;
 
-int line_count=1;
+int line_count=1,interal_line = 0;
 
 ofstream logout;
 ofstream tokenout;
@@ -190,6 +190,7 @@ NEWLINE \n
 				if(x)st->PrintAll(logout);
 		}
 
+
 \'  	{
 			ch.clear();
 			
@@ -208,6 +209,15 @@ NEWLINE \n
 <CONST_CHAR>\\v {ch+="\v";}
 <CONST_CHAR>\\0 {ch+="\0";}
 
+<CONST_CHAR>{LETTER}{LETTER}+({WHITESPACE}?{LETTER}+)*? {
+			BEGIN(INITIAL);
+		}
+<CONST_CHAR>{NEWLINE} {
+			error++;
+			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<ch<<'\n';
+			line_count++;
+			BEGIN(INITIAL);
+		}
 <CONST_CHAR>\' {
 			
 			if(ch.size() == 0){
@@ -220,28 +230,23 @@ NEWLINE \n
 					logout<<"Error at line# "<<line_count<<": EMPTY_CONST_CHAR ''\n";
 				}
 			}
-			else{
+			else if(ch.size() == 1){
 				ch+=yytext;
 				tokenout<<"<CONST_CHAR,"<<ch<<">\n";
 				logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme '"<<ch<<" found\n";	
 			}
-			BEGIN(INITIAL);
-		}
-<CONST_CHAR>{LETTER}{LETTER}+({WHITESPACE}?{LETTER}+)*?\' {
-			error++;
-			logout<<"Error at line# "<<line_count<<": MULTICHAR_CONST_CHAR '"<<yytext<<"\n";
-			BEGIN(INITIAL);
-		}
-<CONST_CHAR>{NEWLINE} {
-			error++;
-			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<ch<<'\n';
-			line_count++;
+			else{
+				error++;
+				logout<<"Error at line# "<<line_count<<": MULTICHAR_CONST_CHAR '"<<ch<<"\n";
+			
+			}
 			BEGIN(INITIAL);
 		}
 
 
 \" {
 		ch.clear();
+		interal_line=0;
 		BEGIN(S_STRING);
 }
 <S_STRING>({WHITESPACE}?{LETTER}+)+? {
@@ -262,13 +267,14 @@ NEWLINE \n
 					tokenout<<"<MULTI LINE STRING,"<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme \""<<ch<<"\" found\n";
 				}
+				line_count+=interal_line;
 			}
 			BEGIN(INITIAL);
 		}
 <S_STRING>\\{NEWLINE} {
 			ch+=yytext;
 			checkMulti = 1;
-			line_count++;
+			interal_line++;
 		}
 <S_STRING>\\t {ch+="\t";}
 <S_STRING>>\\n {ch+="\n";}
@@ -291,6 +297,7 @@ NEWLINE \n
 
 \/\/ {
 		ch.clear();
+		interal_line = 0;
 		ch+=yytext;
 		BEGIN(S_COMMENT);
 	}
@@ -299,10 +306,12 @@ NEWLINE \n
 	}
 <S_COMMENT>\\{NEWLINE} {
 		ch+=yytext;
+		interal_line++;
 	}
 <S_COMMENT>{NEWLINE} {
 		
 			logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<ch<<" found\n";
+			line_count+=interal_line;
 			line_count++;
 			BEGIN(INITIAL);
 		
@@ -316,6 +325,7 @@ NEWLINE \n
 \/\* {
 		ch.clear();
 		ch+=yytext;
+		interal_line=0;
 		BEGIN(M_COMMENT);
 	}
 <M_COMMENT>. {
@@ -323,12 +333,13 @@ NEWLINE \n
 	}
 <M_COMMENT>{NEWLINE} {
 		ch+=yytext;
-		line_count++;	
+		interal_line++;	
 	}
 <M_COMMENT>\*\/ {
 		ch+=yytext;
 		logout<<"Line# "<<line_count<<": Token <MULTI LINE COMMENT> Lexeme "<<ch<<" found\n";
-		line_count++;
+		line_count+=interal_line;
+		
 		BEGIN(INITIAL);
 	}
 <M_COMMENT><<EOF>> {
@@ -337,6 +348,7 @@ NEWLINE \n
 		line_count++;
 		BEGIN(INITIAL);
 }
+
 . {
 		ch.clear();
 		ch+=yytext;
