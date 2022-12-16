@@ -28,7 +28,7 @@ int checkMulti = 0;
 SymbolTable *st = new SymbolTable(buckets);
 ScopeTable *sc = st->EnterScope();
 
-string str1,ch;
+string str1,ch,logStr;
 string makeUpper(string str){
 	
 	str1 = str;
@@ -193,28 +193,26 @@ NEWLINE \n
 
 \'  	{
 			ch.clear();
+			logStr.clear();
 			
 			BEGIN(CONST_CHAR);			
 	    }
-<CONST_CHAR>{LETTER} {ch += yytext;}
-<CONST_CHAR>\\t {ch+="\t";}
-<CONST_CHAR>\\n {ch+="\n";}
-<CONST_CHAR>\\\\ {ch+="\\";}
-<CONST_CHAR>\\\" {ch+="\"";}
-<CONST_CHAR>\\\' {ch+="\'";}
-<CONST_CHAR>\\a {ch+="\a";}
-<CONST_CHAR>\\f {ch+="\f";}
-<CONST_CHAR>\\r {ch+="\r";}
-<CONST_CHAR>\\b {ch+="\b";}
-<CONST_CHAR>\\v {ch+="\v";}
-<CONST_CHAR>\\0 {ch+="\0";}
 
-<CONST_CHAR>{LETTER}{LETTER}+({WHITESPACE}?{LETTER}+)*? {
-			BEGIN(INITIAL);
-		}
+<CONST_CHAR>\\t {ch+="\t";logStr+="\\t";}
+<CONST_CHAR>\\n {ch+="\n";logStr+="\\n";}
+<CONST_CHAR>\\\\ {ch+="\\";logStr+="\\\\";}
+<CONST_CHAR>\\\" {ch+="\"";logStr+="\\\"";}
+<CONST_CHAR>\\\' {ch+="\'";logStr+="\\\'";}
+<CONST_CHAR>\\a {ch+="\a";logStr+="\\\a";}
+<CONST_CHAR>\\f {ch+="\f";logStr+="\\\f";}
+<CONST_CHAR>\\r {ch+="\r";logStr+="\\\r";}
+<CONST_CHAR>\\b {ch+="\b";logStr+="\\\b";}
+<CONST_CHAR>\\v {ch+="\v";logStr+="\\\v";}
+<CONST_CHAR>\\0 {ch+="\0";logStr+="\\\0";}
+
 <CONST_CHAR>{NEWLINE} {
 			error++;
-			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<ch<<'\n';
+			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
 			line_count++;
 			BEGIN(INITIAL);
 		}
@@ -222,37 +220,43 @@ NEWLINE \n
 			
 			if(ch.size() == 0){
 				if(ch=="\\0"){
-					tokenout<<"<CONST_CHAR,"<<ch<<">\n";
+					tokenout<<"<CONST_CHAR, "<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme \0 found\n";
 				}
 				else{
 					error++;
-					logout<<"Error at line# "<<line_count<<": EMPTY_CONST_CHAR ''\n";
+					logout<<"Error at line# "<<line_count<<": EMPTY_CONST_CHAR '"<<logStr<<"'\n";
 				}
 			}
 			else if(ch.size() == 1){
-				ch+=yytext;
-				tokenout<<"<CONST_CHAR,"<<ch<<">\n";
-				logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme '"<<ch<<" found\n";	
+				
+				logStr+=yytext;
+				tokenout<<"<CONST_CHAR, "<<ch<<">\n";
+				logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme "<<ch<<" found\n";	
 			}
 			else{
 				error++;
-				logout<<"Error at line# "<<line_count<<": MULTICHAR_CONST_CHAR '"<<ch<<"\n";
+				logout<<"Error at line# "<<line_count<<": MULTICHAR_CONST_CHAR '"<<ch<<"'\n";
 			
 			}
 			BEGIN(INITIAL);
 		}
 
+<CONST_CHAR>. {
+			logStr+=yytext;
+			ch+=yytext;
+		}
 
 \" {
 		ch.clear();
+		logStr.clear();
+		logStr+=yytext;
 		interal_line=0;
 		BEGIN(S_STRING);
 }
-<S_STRING>({WHITESPACE}?{LETTER}+)+? {
-			ch+=yytext;
-		}
+
 <S_STRING>\" {
+			logStr+=yytext;
 			if(ch.size() == 0){
 					error++;
 					logout<<"Error at line# "<<line_count<<": EMPTY STRING ''\n";	
@@ -260,92 +264,107 @@ NEWLINE \n
 			else{
 				
 				if(!checkMulti){
-					tokenout<<"<SINGLE LINE STRING,"<<ch<<">\n";
-					logout<<"Line# "<<line_count<<": Token <SINGLE LINE STRING> Lexeme \""<<ch<<"\" found\n";
+					tokenout<<"<SINGLE LINE STRING, "<<ch<<">\n";
+					logout<<"Line# "<<line_count<<": Token <SINGLE LINE STRING> Lexeme "<<logStr<<" found\n";
 				}
 				else {
-					tokenout<<"<MULTI LINE STRING,"<<ch<<">\n";
-					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme \""<<ch<<"\" found\n";
+					tokenout<<"<MULTI LINE STRING, "<<ch<<">\n";
+					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme "<<logStr<<" found\n";
 				}
-				line_count+=interal_line;
+				
 			}
+			line_count+=interal_line;
 			BEGIN(INITIAL);
 		}
 <S_STRING>\\{NEWLINE} {
-			ch+=yytext;
+			
+			logStr+=yytext;
 			checkMulti = 1;
 			interal_line++;
 		}
-<S_STRING>\\t {ch+="\t";}
-<S_STRING>>\\n {ch+="\n";}
-<S_STRING>>\\\\ {ch+="\\";}
-<S_STRING>>\\\" {ch+="\"";}
-<S_STRING>>\\a {ch+="\a";}
-<S_STRING>>\\f {ch+="\f";}
-<S_STRING>>\\r {ch+="\r";}
-<S_STRING>>\\b {ch+="\b";}
-<S_STRING>>\\v {ch+="\v";}
-<S_STRING>>\\0 {ch+="\0";}
+<S_STRING>\\t {ch+="\t";logStr+="\\t";}
+<S_STRING>>\\n {ch+="\n";logStr+="\\n";}
+<S_STRING>>\\\\ {ch+="\\";logStr+="\\\\";}
+<S_STRING>>\\\" {ch+="\"";logStr+="\\\"";}
+<S_STRING>>\\a {ch+="\a";logStr+="\\a";}
+<S_STRING>>\\f {ch+="\f";logStr+="\\f";}
+<S_STRING>>\\r {ch+="\r";logStr+="\\r";}
+<S_STRING>>\\b {ch+="\b";logStr+="\\b";}
+<S_STRING>>\\v {ch+="\v";logStr+="\\v";}
+<S_STRING>>\\0 {ch+="\0";logStr+="\\0";}
 
 <S_STRING>{NEWLINE} {
 			error++;
-			logout<<"Error at line# "<<line_count<<": UNFINISHED_STRING \""<<ch<<"\n";
+			line_count+=interal_line;
+			logout<<"Error at line# "<<line_count<<": UNFINISHED_STRING "<<logStr<<"\n";
 			line_count++;
+			interal_line=0;
 			BEGIN(INITIAL);
 		}
-
+<S_STRING>. {
+			ch+=yytext;
+			logStr+=yytext;
+		}
 
 \/\/ {
 		ch.clear();
+		logStr.clear();
 		interal_line = 0;
 		ch+=yytext;
+		logStr+=yytext;
 		BEGIN(S_COMMENT);
 	}
 <S_COMMENT>. {
 		ch+=yytext;
+		logStr+=yytext;
 	}
 <S_COMMENT>\\{NEWLINE} {
 		ch+=yytext;
+		logStr+=yytext;
 		interal_line++;
 	}
 <S_COMMENT>{NEWLINE} {
 		
-			logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<ch<<" found\n";
+			logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<logStr<<" found\n";
 			line_count+=interal_line;
 			line_count++;
 			BEGIN(INITIAL);
 		
 	}
 <S_COMMENT><<EOF>> {
+		line_count+=interal_line;
 		logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<ch<<" found\n";
-		line_count++;
+		interal_line=0;
+		
 		BEGIN(INITIAL);
 	}
 
 \/\* {
-		ch.clear();
-		ch+=yytext;
+		logStr.clear();
+		logStr+=yytext;
 		interal_line=0;
 		BEGIN(M_COMMENT);
 	}
 <M_COMMENT>. {
-		ch+=yytext;
+		logStr+=yytext;
 	}
 <M_COMMENT>{NEWLINE} {
-		ch+=yytext;
+		
+		logStr+=yytext;
 		interal_line++;	
 	}
 <M_COMMENT>\*\/ {
-		ch+=yytext;
-		logout<<"Line# "<<line_count<<": Token <MULTI LINE COMMENT> Lexeme "<<ch<<" found\n";
+		logStr+=yytext;
+		logout<<"Line# "<<line_count<<": Token <MULTI LINE COMMENT> Lexeme "<<logStr<<" found\n";
 		line_count+=interal_line;
 		
 		BEGIN(INITIAL);
 	}
 <M_COMMENT><<EOF>> {
 		error++;
-		logout<<"Error at line# "<<line_count<<": UNFINISHED_COMMENT "<<ch<<"\n";
-		line_count++;
+		line_count+=interal_line;
+		logout<<"Error at line# "<<line_count<<": UNFINISHED_COMMENT "<<logStr<<"\n";
+		
 		BEGIN(INITIAL);
 }
 
