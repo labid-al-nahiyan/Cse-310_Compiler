@@ -2,8 +2,7 @@
 
 
 %x CONST_CHAR
-%x S_STRING
-%x M_STRING
+%x STRING
 %x S_COMMENT
 %x M_COMMENT
 
@@ -197,7 +196,6 @@ NEWLINE \n
 			
 			BEGIN(CONST_CHAR);			
 	    }
-
 <CONST_CHAR>\\t {ch+="\t";logStr+="\\t";}
 <CONST_CHAR>\\n {ch+="\n";logStr+="\\n";}
 <CONST_CHAR>\\\\ {ch+="\\";logStr+="\\\\";}
@@ -216,6 +214,12 @@ NEWLINE \n
 			line_count++;
 			BEGIN(INITIAL);
 		}
+<CONST_CHAR><<EOF>> {
+			error++;
+			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
+			line_count++;
+			BEGIN(INITIAL);
+        }
 <CONST_CHAR>\' {
 			
 			if(ch.size() == 0){
@@ -252,17 +256,16 @@ NEWLINE \n
 		logStr.clear();
 		logStr+=yytext;
 		interal_line=0;
-		BEGIN(S_STRING);
+		BEGIN(STRING);
 }
 
-<S_STRING>\" {
+<STRING>\" {
 			logStr+=yytext;
 			if(ch.size() == 0){
 					error++;
 					logout<<"Error at line# "<<line_count<<": EMPTY STRING ''\n";	
 			}
 			else{
-				
 				if(!checkMulti){
 					tokenout<<"<SINGLE LINE STRING, "<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <SINGLE LINE STRING> Lexeme "<<logStr<<" found\n";
@@ -270,30 +273,28 @@ NEWLINE \n
 				else {
 					tokenout<<"<MULTI LINE STRING, "<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme "<<logStr<<" found\n";
-				}
-				
+				}	
 			}
 			line_count+=interal_line;
 			BEGIN(INITIAL);
 		}
-<S_STRING>\\{NEWLINE} {
-			
+<STRING>\\{NEWLINE} {
 			logStr+=yytext;
 			checkMulti = 1;
 			interal_line++;
 		}
-<S_STRING>\\t {ch+="\t";logStr+="\\t";}
-<S_STRING>>\\n {ch+="\n";logStr+="\\n";}
-<S_STRING>>\\\\ {ch+="\\";logStr+="\\\\";}
-<S_STRING>>\\\" {ch+="\"";logStr+="\\\"";}
-<S_STRING>>\\a {ch+="\a";logStr+="\\a";}
-<S_STRING>>\\f {ch+="\f";logStr+="\\f";}
-<S_STRING>>\\r {ch+="\r";logStr+="\\r";}
-<S_STRING>>\\b {ch+="\b";logStr+="\\b";}
-<S_STRING>>\\v {ch+="\v";logStr+="\\v";}
-<S_STRING>>\\0 {ch+="\0";logStr+="\\0";}
+<STRING>\\t {ch+="\t";logStr+="\\t";}
+<STRING>>\\n {ch+="\n";logStr+="\\n";}
+<STRING>>\\\\ {ch+="\\";logStr+="\\\\";}
+<STRING>>\\\" {ch+="\"";logStr+="\\\"";}
+<STRING>>\\a {ch+="\a";logStr+="\\a";}
+<STRING>>\\f {ch+="\f";logStr+="\\f";}
+<STRING>>\\r {ch+="\r";logStr+="\\r";}
+<STRING>>\\b {ch+="\b";logStr+="\\b";}
+<STRING>>\\v {ch+="\v";logStr+="\\v";}
+<STRING>>\\0 {ch+="\0";logStr+="\\0";}
 
-<S_STRING>{NEWLINE} {
+<STRING>{NEWLINE} {
 			error++;
 			line_count+=interal_line;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_STRING "<<logStr<<"\n";
@@ -301,7 +302,15 @@ NEWLINE \n
 			interal_line=0;
 			BEGIN(INITIAL);
 		}
-<S_STRING>. {
+<STRING><<EOF>> {
+			error++;
+			line_count+=interal_line;
+			logout<<"Error at line# "<<line_count<<": UNFINISHED_STRING "<<logStr<<"\n";
+			line_count++;
+			interal_line=0;
+			BEGIN(INITIAL);
+		}
+<STRING>. {
 			ch+=yytext;
 			logStr+=yytext;
 		}
