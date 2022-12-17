@@ -208,6 +208,7 @@ NEWLINE \n
 <CONST_CHAR>\\v {ch+="\v";logStr+="\\\v";}
 <CONST_CHAR>\\0 {ch+="\0";logStr+="\\\0";}
 
+
 <CONST_CHAR>{NEWLINE} {
 			error++;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
@@ -259,41 +260,24 @@ NEWLINE \n
 		BEGIN(STRING);
 }
 
-<STRING>\" {
-			logStr+=yytext;
-			if(ch.size() == 0){
-					error++;
-					logout<<"Error at line# "<<line_count<<": EMPTY STRING ''\n";	
-			}
-			else{
-				if(!checkMulti){
-					tokenout<<"<SINGLE LINE STRING, "<<ch<<">\n";
-					logout<<"Line# "<<line_count<<": Token <SINGLE LINE STRING> Lexeme "<<logStr<<" found\n";
-				}
-				else {
-					tokenout<<"<MULTI LINE STRING, "<<ch<<">\n";
-					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme "<<logStr<<" found\n";
-				}	
-			}
-			line_count+=interal_line;
-			BEGIN(INITIAL);
-		}
+
+<STRING>\\t {ch+="\t";logStr+="\\t";}
+<STRING>\\n {ch+="\n";logStr+="\\n";}
+<STRING>\\\\ {ch+="\\";logStr+="\\\\";}
+<STRING>\\\" {ch+="\"";logStr+="\\\"";}
+<STRING>\\\' {ch+="\'";logStr+="\\\'";}
+<STRING>\\a {ch+="\a";logStr+="\\\a";}
+<STRING>\\f {ch+="\f";logStr+="\\\f";}
+<STRING>\\r {ch+="\r";logStr+="\\\r";}
+<STRING>\\b {ch+="\b";logStr+="\\\b";}
+<STRING>\\v {ch+="\v";logStr+="\\\v";}
+<STRING>\\0 {ch+="\0";logStr+="\\\0";}
+
 <STRING>\\{NEWLINE} {
 			logStr+=yytext;
 			checkMulti = 1;
 			interal_line++;
 		}
-<STRING>\\t {ch+="\t";logStr+="\\t";}
-<STRING>>\\n {ch+="\n";logStr+="\\n";}
-<STRING>>\\\\ {ch+="\\";logStr+="\\\\";}
-<STRING>>\\\" {ch+="\"";logStr+="\\\"";}
-<STRING>>\\a {ch+="\a";logStr+="\\a";}
-<STRING>>\\f {ch+="\f";logStr+="\\f";}
-<STRING>>\\r {ch+="\r";logStr+="\\r";}
-<STRING>>\\b {ch+="\b";logStr+="\\b";}
-<STRING>>\\v {ch+="\v";logStr+="\\v";}
-<STRING>>\\0 {ch+="\0";logStr+="\\0";}
-
 <STRING>{NEWLINE} {
 			error++;
 			line_count+=interal_line;
@@ -310,7 +294,31 @@ NEWLINE \n
 			interal_line=0;
 			BEGIN(INITIAL);
 		}
+
+<STRING>["] {
+			
+			logStr+=yytext;
+			if(ch.size() == 0){
+					error++;
+					logout<<"Error at line# "<<line_count<<": EMPTY STRING ''\n";	
+			}
+			else{
+				if(!checkMulti){
+					tokenout<<"<SINGLE LINE STRING, "<<ch<<">\n";
+					logout<<"Line# "<<line_count<<": Token <SINGLE LINE STRING> Lexeme "<<logStr<<" found\n";
+				}
+				else {
+					tokenout<<"<MULTI LINE STRING, "<<ch<<">\n";
+					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme "<<logStr<<" found\n";
+					checkMulti = 0;
+
+				}	
+			}
+			line_count+=interal_line;
+			BEGIN(INITIAL);
+		}
 <STRING>. {
+			
 			ch+=yytext;
 			logStr+=yytext;
 		}
@@ -405,7 +413,7 @@ int main(int argc, char** argv) {
 	yylex();
 
 	st->PrintAll(logout);
-	logout<<"Total lines: "<<line_count<<'\n';
+	logout<<"Total lines: "<<line_count+interal_line<<'\n';
 	logout<<"Total errors: "<<error<<'\n';
 	
 	fclose(yyin);
