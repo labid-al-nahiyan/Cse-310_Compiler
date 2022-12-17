@@ -315,6 +315,7 @@ NEWLINE \n
 				}	
 			}
 			line_count+=interal_line;
+			interal_line=0;
 			BEGIN(INITIAL);
 		}
 <STRING>. {
@@ -344,6 +345,7 @@ NEWLINE \n
 		
 			logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<logStr<<" found\n";
 			line_count+=interal_line;
+			interal_line=0;
 			line_count++;
 			BEGIN(INITIAL);
 		
@@ -374,14 +376,14 @@ NEWLINE \n
 		logStr+=yytext;
 		logout<<"Line# "<<line_count<<": Token <MULTI LINE COMMENT> Lexeme "<<logStr<<" found\n";
 		line_count+=interal_line;
-		
+		interal_line=0;
 		BEGIN(INITIAL);
 	}
 <M_COMMENT><<EOF>> {
 		error++;
 		line_count+=interal_line;
 		logout<<"Error at line# "<<line_count<<": UNFINISHED_COMMENT "<<logStr<<"\n";
-		
+		interal_line=0;
 		BEGIN(INITIAL);
 }
 
@@ -413,7 +415,7 @@ int main(int argc, char** argv) {
 	yylex();
 
 	st->PrintAll(logout);
-	logout<<"Total lines: "<<line_count+interal_line<<'\n';
+	logout<<"Total lines: "<<line_count<<'\n';
 	logout<<"Total errors: "<<error<<'\n';
 	
 	fclose(yyin);

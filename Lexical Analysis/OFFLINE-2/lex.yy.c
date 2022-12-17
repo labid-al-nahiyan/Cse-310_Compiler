@@ -1337,12 +1337,13 @@ YY_RULE_SETUP
 				}	
 			}
 			line_count+=interal_line;
+			interal_line=0;
 			BEGIN(INITIAL);
 		}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 320 "1905110.l"
+#line 321 "1905110.l"
 {
 			
 			ch+=yytext;
@@ -1351,7 +1352,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 326 "1905110.l"
+#line 327 "1905110.l"
 {
 		ch.clear();
 		logStr.clear();
@@ -1363,7 +1364,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 334 "1905110.l"
+#line 335 "1905110.l"
 {
 		ch+=yytext;
 		logStr+=yytext;
@@ -1372,7 +1373,7 @@ YY_RULE_SETUP
 case 59:
 /* rule 59 can match eol */
 YY_RULE_SETUP
-#line 338 "1905110.l"
+#line 339 "1905110.l"
 {
 		ch+=yytext;
 		logStr+=yytext;
@@ -1382,18 +1383,19 @@ YY_RULE_SETUP
 case 60:
 /* rule 60 can match eol */
 YY_RULE_SETUP
-#line 343 "1905110.l"
+#line 344 "1905110.l"
 {
 		
 			logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<logStr<<" found\n";
 			line_count+=interal_line;
+			interal_line=0;
 			line_count++;
 			BEGIN(INITIAL);
 		
 	}
 	YY_BREAK
 case YY_STATE_EOF(S_COMMENT):
-#line 351 "1905110.l"
+#line 353 "1905110.l"
 {
 		line_count+=interal_line;
 		logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<ch<<" found\n";
@@ -1404,7 +1406,7 @@ case YY_STATE_EOF(S_COMMENT):
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 359 "1905110.l"
+#line 361 "1905110.l"
 {
 		logStr.clear();
 		logStr+=yytext;
@@ -1414,7 +1416,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 365 "1905110.l"
+#line 367 "1905110.l"
 {
 		logStr+=yytext;
 	}
@@ -1422,7 +1424,7 @@ YY_RULE_SETUP
 case 63:
 /* rule 63 can match eol */
 YY_RULE_SETUP
-#line 368 "1905110.l"
+#line 370 "1905110.l"
 {
 		
 		logStr+=yytext;
@@ -1431,28 +1433,28 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 373 "1905110.l"
+#line 375 "1905110.l"
 {
 		logStr+=yytext;
 		logout<<"Line# "<<line_count<<": Token <MULTI LINE COMMENT> Lexeme "<<logStr<<" found\n";
 		line_count+=interal_line;
-		
+		interal_line=0;
 		BEGIN(INITIAL);
 	}
 	YY_BREAK
 case YY_STATE_EOF(M_COMMENT):
-#line 380 "1905110.l"
+#line 382 "1905110.l"
 {
 		error++;
 		line_count+=interal_line;
 		logout<<"Error at line# "<<line_count<<": UNFINISHED_COMMENT "<<logStr<<"\n";
-		
+		interal_line=0;
 		BEGIN(INITIAL);
 }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 388 "1905110.l"
+#line 390 "1905110.l"
 {
 		ch.clear();
 		ch+=yytext;
@@ -1463,10 +1465,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 396 "1905110.l"
+#line 398 "1905110.l"
 ECHO;
 	YY_BREAK
-#line 1470 "lex.yy.c"
+#line 1472 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2471,7 +2473,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 396 "1905110.l"
+#line 398 "1905110.l"
 
 int main(int argc, char** argv) {
 	if(argc!=2){
@@ -2492,7 +2494,7 @@ int main(int argc, char** argv) {
 	yylex();
 
 	st->PrintAll(logout);
-	logout<<"Total lines: "<<line_count+interal_line<<'\n';
+	logout<<"Total lines: "<<line_count<<'\n';
 	logout<<"Total errors: "<<error<<'\n';
 	
 	fclose(yyin);
