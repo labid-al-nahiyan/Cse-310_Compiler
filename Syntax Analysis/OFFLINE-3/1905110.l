@@ -8,15 +8,15 @@
 
 %{
 #include<bits/stdc++.h>
-#include "1905110_SymbolInfo.cpp"
-#include "1905110_ScopeTable.cpp"
-#include "1905110_SymbolTable.cpp"
 #include "y.tab.h"
 
 using namespace std;
 typedef long long ll;
 
 int line_count=1,interal_line = 0;
+
+
+extern YYSTYPE yylval;
 
 ofstream logout;
 ofstream tokenout;
@@ -25,10 +25,10 @@ ll buckets = 10;
 int error = 0;
 int checkMulti = 0;
 
-SymbolTable *st = new SymbolTable(buckets);
-ScopeTable *sc = st->EnterScope();
+
 
 string str1,ch,logStr;
+
 string makeUpper(string str){
 	
 	str1 = str;
@@ -66,8 +66,9 @@ NEWLINE \n
 
 {KEYWORD} {
 			
-			tokenout<<"<"<<makeUpper(yytext)<<", "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <"<<makeUpper(yytext)<<"> Lexeme "<<yytext<<" found\n";
+			
+			//yylval.str = makeUpper(yytext);
+			return KEYWORD;
 			
 		}
 
@@ -82,9 +83,15 @@ NEWLINE \n
 			return MINUS;
 		}
 
-{MULOP} {
+"*" {
 			tokenout<<"<MULOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <MULOP> Lexeme "<<yytext<<" found\n";
+			return ASTERISK;
+		}
+"/"     {
+			tokenout<<"<MULOP, "<<yytext<<">\n";
+			logout<<"Line# "<<line_count<<": Token <MULOP> Lexeme "<<yytext<<" found\n";
+			return SLASH;
 		}
 
 {INCOP} {
@@ -94,11 +101,13 @@ NEWLINE \n
 {RELOP} {
 			tokenout<<"<RELOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RELOP> Lexeme "<<yytext<<" found\n";
+			
 		}
 
 "="		{
 			tokenout<<"<ASSIGNOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <ASSIGNOP> Lexeme "<<yytext<<" found\n";
+			
 		}
 
 {LOGICOP}	{
@@ -114,49 +123,57 @@ NEWLINE \n
 "!"		{
 			tokenout<<"<NOT, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <NOT> Lexeme "<<yytext<<" found\n";
+			return NOT;
 		}
 
 "("		{
 			tokenout<<"<LPAREN, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LPAREN> Lexeme "<<yytext<<" found\n";
+			return LPAREN;
 		}
 
 ")"		{
 			tokenout<<"<RPAREN, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RPAREN> Lexeme "<<yytext<<" found\n";
+			return RPAREN;
 		}
 
 "{"		{
-			st->EnterScope();
 			tokenout<<"<LCURL, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LCURL> Lexeme "<<yytext<<" found\n";
 			return LCURL;
+			
 		}
 
 "}"		{
-			st->ExitScope();
+			
 			tokenout<<"<RCURL, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RCURL> Lexeme "<<yytext<<" found\n";
+			return RCURL;
 		}
 
 
 "["		{
 			tokenout<<"<LSQUARE, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LSQUARE> Lexeme "<<yytext<<" found\n";
+			return LSQUARE;
 		}
 
 "]"		{
 			tokenout<<"<RSQUARE, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RSQUARE> Lexeme "<<yytext<<" found\n";
+			return RSQUARE;
 		}
 ","		{
 			tokenout<<"<COMMA, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <COMMA> Lexeme "<<yytext<<" found\n";
+			return COMMA;
 		}
 
 ";"		{
 			tokenout<<"<SEMICOLON, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <SEMICOLON> Lexeme "<<yytext<<" found\n";
+			return SEMICOLON;
 		}
 		
 {DIGITS} {
@@ -164,7 +181,12 @@ NEWLINE \n
 				
 				tokenout<<"<CONST_INT, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <CONST_INT> Lexeme "<<yytext<<" found\n";
-				sscanf(yytext,"%lf",&yylval);
+
+
+				//sscanf(yytext,"%lf", &yylval);
+				yylval = atof(yytext);
+
+				cout<<"\'"<<yylval<<"\'\n";
 				return NUMBER;
 			}
 {DIGITS}{LETTER}+ {
@@ -196,8 +218,7 @@ NEWLINE \n
 {IDENTIFIER} {
 				tokenout<<"<ID, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <ID> Lexeme "<<yytext<<" found\n";
-				int x = st->Insert(yytext,"ID",logout);
-				if(x)st->PrintAll(logout);
+				return ID;
 		}
 
 

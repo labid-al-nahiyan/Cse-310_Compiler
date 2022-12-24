@@ -55,14 +55,22 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     NEWLINE = 258,                 /* NEWLINE  */
-    NUMBER = 259,                  /* NUMBER  */
-    PLUS = 260,                    /* PLUS  */
-    MINUS = 261,                   /* MINUS  */
-    SLASH = 262,                   /* SLASH  */
-    ASTERISK = 263,                /* ASTERISK  */
-    LPAREN = 264,                  /* LPAREN  */
-    RPAREN = 265,                  /* RPAREN  */
-    LCURL = 266                    /* LCURL  */
+    SEMICOLON = 259,               /* SEMICOLON  */
+    ID = 260,                      /* ID  */
+    PLUS = 261,                    /* PLUS  */
+    MINUS = 262,                   /* MINUS  */
+    SLASH = 263,                   /* SLASH  */
+    ASTERISK = 264,                /* ASTERISK  */
+    LPAREN = 265,                  /* LPAREN  */
+    RPAREN = 266,                  /* RPAREN  */
+    LCURL = 267,                   /* LCURL  */
+    RCURL = 268,                   /* RCURL  */
+    LSQUARE = 269,                 /* LSQUARE  */
+    RSQUARE = 270,                 /* RSQUARE  */
+    COMMA = 271,                   /* COMMA  */
+    NOT = 272,                     /* NOT  */
+    KEYWORD = 273,                 /* KEYWORD  */
+    NUMBER = 274                   /* NUMBER  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -72,14 +80,22 @@ extern int yydebug;
 #define YYerror 256
 #define YYUNDEF 257
 #define NEWLINE 258
-#define NUMBER 259
-#define PLUS 260
-#define MINUS 261
-#define SLASH 262
-#define ASTERISK 263
-#define LPAREN 264
-#define RPAREN 265
-#define LCURL 266
+#define SEMICOLON 259
+#define ID 260
+#define PLUS 261
+#define MINUS 262
+#define SLASH 263
+#define ASTERISK 264
+#define LPAREN 265
+#define RPAREN 266
+#define LCURL 267
+#define RCURL 268
+#define LSQUARE 269
+#define RSQUARE 270
+#define COMMA 271
+#define NOT 272
+#define KEYWORD 273
+#define NUMBER 274
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
