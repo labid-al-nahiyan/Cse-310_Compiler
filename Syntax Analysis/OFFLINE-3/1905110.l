@@ -46,7 +46,8 @@ RELOP "<"|"<="|">"|">="|"=="|"!="
 BITOP "&"|"|"|"^"|"<<"|">>"	
 ADDOP "+"|"-" 
 MULOP "*"|"%"|"/"	
-INCOP "++"|"--"		
+INCOP "++"
+DECOP "--"		
 LOGICOP "&&"|"||"	
 DIGIT [0-9]
 DIGITS {DIGIT}+
@@ -61,23 +62,23 @@ NEWLINE \n
 			line_count++;
 				
 		}
-if { return IF;}
-else { return ELSE;}
-for { return FOR; }
-while { return WHILE;}
-do { return DO;}
-break { return BREAK;}
-int { return INT;}
-char { return CHAR;}
-float { return FLOAT;}
-double { return DOUBLE;}
-void { return VOID; }
-return { return RETURN;}
-switch { return SWITCH;}
-case { return CASE;}
-default { return DEFAULT;}
-continue { return CONTINUE;}
-printf	{return PRINTLN;}
+if       {logout<<"Line# "<<line_count<<": Token <IF> Lexeme "<<yytext<<" found\n"; return IF;}
+else     {logout<<"Line# "<<line_count<<": Token <ELSE> Lexeme "<<yytext<<" found\n"; return ELSE;}
+for      {logout<<"Line# "<<line_count<<": Token <FOR> Lexeme "<<yytext<<" found\n"; return FOR; }
+while    {logout<<"Line# "<<line_count<<": Token <WHILE> Lexeme "<<yytext<<" found\n"; return WHILE;}
+do       {logout<<"Line# "<<line_count<<": Token <DO> Lexeme "<<yytext<<" found\n"; return DO;}
+break    {logout<<"Line# "<<line_count<<": Token <BREAK> Lexeme "<<yytext<<" found\n"; return BREAK;}
+int      {logout<<"Line# "<<line_count<<": Token <INT> Lexeme "<<yytext<<" found\n"; return INT;}
+char     {logout<<"Line# "<<line_count<<": Token <CHAR> Lexeme "<<yytext<<" found\n"; return CHAR;}
+float    {logout<<"Line# "<<line_count<<": Token <FLOAT> Lexeme "<<yytext<<" found\n"; return FLOAT;}
+double   {logout<<"Line# "<<line_count<<": Token <DOUBLE> Lexeme "<<yytext<<" found\n"; return DOUBLE;}
+void     {logout<<"Line# "<<line_count<<": Token <VOID> Lexeme "<<yytext<<" found\n"; return VOID; }
+return   {logout<<"Line# "<<line_count<<": Token <RETURN> Lexeme "<<yytext<<" found\n"; return RETURN;}
+switch   {logout<<"Line# "<<line_count<<": Token <SWITCH> Lexeme "<<yytext<<" found\n"; return SWITCH;}
+case     {logout<<"Line# "<<line_count<<": Token <CASE> Lexeme "<<yytext<<" found\n"; return CASE;}
+default  {logout<<"Line# "<<line_count<<": Token <DEFAULT> Lexeme "<<yytext<<" found\n"; return DEFAULT;}
+continue {logout<<"Line# "<<line_count<<": Token <CONTINUE> Lexeme "<<yytext<<" found\n"; return CONTINUE;}
+printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" found\n";return PRINTLN;}
 
 {ADDOP}		{
 			////tokenout<<"<ADDOP, "<<yytext<<">\n";
@@ -93,12 +94,12 @@ printf	{return PRINTLN;}
 		}
 
 
-"++" {
+{INCOP} {
 			//tokenout<<"<INCOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
 			return INCOP;
 		}
-"--" {
+{DECOP} {
 			//tokenout<<"<INCOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
 			return DECOP;
