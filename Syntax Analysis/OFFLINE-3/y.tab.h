@@ -54,23 +54,50 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    NEWLINE = 258,                 /* NEWLINE  */
-    SEMICOLON = 259,               /* SEMICOLON  */
-    ID = 260,                      /* ID  */
-    PLUS = 261,                    /* PLUS  */
-    MINUS = 262,                   /* MINUS  */
-    SLASH = 263,                   /* SLASH  */
-    ASTERISK = 264,                /* ASTERISK  */
-    LPAREN = 265,                  /* LPAREN  */
-    RPAREN = 266,                  /* RPAREN  */
-    LCURL = 267,                   /* LCURL  */
-    RCURL = 268,                   /* RCURL  */
-    LSQUARE = 269,                 /* LSQUARE  */
-    RSQUARE = 270,                 /* RSQUARE  */
-    COMMA = 271,                   /* COMMA  */
-    NOT = 272,                     /* NOT  */
-    KEYWORD = 273,                 /* KEYWORD  */
-    NUMBER = 274                   /* NUMBER  */
+    DO = 258,                      /* DO  */
+    CHAR = 259,                    /* CHAR  */
+    BREAK = 260,                   /* BREAK  */
+    DOUBLE = 261,                  /* DOUBLE  */
+    SWITCH = 262,                  /* SWITCH  */
+    CASE = 263,                    /* CASE  */
+    DEFAULT = 264,                 /* DEFAULT  */
+    CONTINUE = 265,                /* CONTINUE  */
+    NEWLINE = 266,                 /* NEWLINE  */
+    SEMICOLON = 267,               /* SEMICOLON  */
+    ID = 268,                      /* ID  */
+    PLUS = 269,                    /* PLUS  */
+    MINUS = 270,                   /* MINUS  */
+    SLASH = 271,                   /* SLASH  */
+    ASTERISK = 272,                /* ASTERISK  */
+    LPAREN = 273,                  /* LPAREN  */
+    RPAREN = 274,                  /* RPAREN  */
+    LCURL = 275,                   /* LCURL  */
+    RCURL = 276,                   /* RCURL  */
+    LSQUARE = 277,                 /* LSQUARE  */
+    RSQUARE = 278,                 /* RSQUARE  */
+    COMMA = 279,                   /* COMMA  */
+    NOT = 280,                     /* NOT  */
+    KEYWORD = 281,                 /* KEYWORD  */
+    CONST_INT = 282,               /* CONST_INT  */
+    CONST_FLOAT = 283,             /* CONST_FLOAT  */
+    IF = 284,                      /* IF  */
+    FOR = 285,                     /* FOR  */
+    ELSE = 286,                    /* ELSE  */
+    INT = 287,                     /* INT  */
+    FLOAT = 288,                   /* FLOAT  */
+    VOID = 289,                    /* VOID  */
+    LTHIRD = 290,                  /* LTHIRD  */
+    RTHIRD = 291,                  /* RTHIRD  */
+    WHILE = 292,                   /* WHILE  */
+    PRINTLN = 293,                 /* PRINTLN  */
+    RETURN = 294,                  /* RETURN  */
+    ADDOP = 295,                   /* ADDOP  */
+    LOGICOP = 296,                 /* LOGICOP  */
+    DECOP = 297,                   /* DECOP  */
+    RELOP = 298,                   /* RELOP  */
+    ASSIGNOP = 299,                /* ASSIGNOP  */
+    MULOP = 300,                   /* MULOP  */
+    INCOP = 301                    /* INCOP  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -79,23 +106,50 @@ extern int yydebug;
 #define YYEOF 0
 #define YYerror 256
 #define YYUNDEF 257
-#define NEWLINE 258
-#define SEMICOLON 259
-#define ID 260
-#define PLUS 261
-#define MINUS 262
-#define SLASH 263
-#define ASTERISK 264
-#define LPAREN 265
-#define RPAREN 266
-#define LCURL 267
-#define RCURL 268
-#define LSQUARE 269
-#define RSQUARE 270
-#define COMMA 271
-#define NOT 272
-#define KEYWORD 273
-#define NUMBER 274
+#define DO 258
+#define CHAR 259
+#define BREAK 260
+#define DOUBLE 261
+#define SWITCH 262
+#define CASE 263
+#define DEFAULT 264
+#define CONTINUE 265
+#define NEWLINE 266
+#define SEMICOLON 267
+#define ID 268
+#define PLUS 269
+#define MINUS 270
+#define SLASH 271
+#define ASTERISK 272
+#define LPAREN 273
+#define RPAREN 274
+#define LCURL 275
+#define RCURL 276
+#define LSQUARE 277
+#define RSQUARE 278
+#define COMMA 279
+#define NOT 280
+#define KEYWORD 281
+#define CONST_INT 282
+#define CONST_FLOAT 283
+#define IF 284
+#define FOR 285
+#define ELSE 286
+#define INT 287
+#define FLOAT 288
+#define VOID 289
+#define LTHIRD 290
+#define RTHIRD 291
+#define WHILE 292
+#define PRINTLN 293
+#define RETURN 294
+#define ADDOP 295
+#define LOGICOP 296
+#define DECOP 297
+#define RELOP 298
+#define ASSIGNOP 299
+#define MULOP 300
+#define INCOP 301
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

@@ -18,15 +18,12 @@ int line_count=1,interal_line = 0;
 
 extern YYSTYPE yylval;
 
-ofstream logout;
-ofstream tokenout;
+extern ofstream logout;
+//extern ofstream //tokenout;
 
-ll buckets = 10;
+//ll buckets = 10;
 int error = 0;
 int checkMulti = 0;
-
-
-
 string str1,ch,logStr;
 
 string makeUpper(string str){
@@ -46,7 +43,8 @@ KEYWORD if|for|do|int|float|void|switch|default|else|while|break|char|double|ret
 WHITESPACE [ \t\f\r\v]+ 
 LETTER [a-zA-Z]
 RELOP "<"|"<="|">"|">="|"=="|"!="   
-BITOP "&"|"|"|"^"|"<<"|">>"	 
+BITOP "&"|"|"|"^"|"<<"|">>"	
+ADDOP "+"|"-" 
 MULOP "*"|"%"|"/"	
 INCOP "++"|"--"		
 LOGICOP "&&"|"||"	
@@ -61,85 +59,93 @@ NEWLINE \n
 {WHITESPACE} {}
 {NEWLINE} {
 			line_count++;
-			return NEWLINE;	
+				
 		}
+if { return IF;}
+else { return ELSE;}
+for { return FOR; }
+while { return WHILE;}
+do { return DO;}
+break { return BREAK;}
+int { return INT;}
+char { return CHAR;}
+float { return FLOAT;}
+double { return DOUBLE;}
+void { return VOID; }
+return { return RETURN;}
+switch { return SWITCH;}
+case { return CASE;}
+default { return DEFAULT;}
+continue { return CONTINUE;}
+printf	{return PRINTLN;}
 
-{KEYWORD} {
-			
-			
-			//yylval.str = makeUpper(yytext);
-			return KEYWORD;
-			
-		}
-
-"+"		{
-			tokenout<<"<ADDOP, "<<yytext<<">\n";
+{ADDOP}		{
+			////tokenout<<"<ADDOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <ADDOP> Lexeme "<<yytext<<" found\n";
-			return PLUS;
-		}
-"-"		{
-			tokenout<<"<ADDOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <ADDOP> Lexeme "<<yytext<<" found\n";
-			return MINUS;
+			return ADDOP;
 		}
 
-"*" {
-			tokenout<<"<MULOP, "<<yytext<<">\n";
+
+{MULOP} {
+			//tokenout<<"<MULOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <MULOP> Lexeme "<<yytext<<" found\n";
-			return ASTERISK;
-		}
-"/"     {
-			tokenout<<"<MULOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <MULOP> Lexeme "<<yytext<<" found\n";
-			return SLASH;
+			return MULOP;
 		}
 
-{INCOP} {
-			tokenout<<"<INCOP, "<<yytext<<">\n";
+
+"++" {
+			//tokenout<<"<INCOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
+			return INCOP;
 		}
+"--" {
+			//tokenout<<"<INCOP, "<<yytext<<">\n";
+			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
+			return DECOP;
+		}
+
 {RELOP} {
-			tokenout<<"<RELOP, "<<yytext<<">\n";
+			//tokenout<<"<RELOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RELOP> Lexeme "<<yytext<<" found\n";
-			
+			return RELOP;
 		}
 
 "="		{
-			tokenout<<"<ASSIGNOP, "<<yytext<<">\n";
+			//tokenout<<"<ASSIGNOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <ASSIGNOP> Lexeme "<<yytext<<" found\n";
-			
+			return ASSIGNOP;
 		}
 
 {LOGICOP}	{
-			tokenout<<"<LOGICOP, "<<yytext<<">\n";
+			//tokenout<<"<LOGICOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LOGICOP> Lexeme "<<yytext<<" found\n";
 		}
 
 {BITOP} {
-			tokenout<<"<BITOP, "<<yytext<<">\n";
+			//tokenout<<"<BITOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <BITOP> Lexeme "<<yytext<<" found\n";
 		}
 
 "!"		{
-			tokenout<<"<NOT, "<<yytext<<">\n";
+			//tokenout<<"<NOT, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <NOT> Lexeme "<<yytext<<" found\n";
 			return NOT;
 		}
 
 "("		{
-			tokenout<<"<LPAREN, "<<yytext<<">\n";
+			//tokenout<<"<LPAREN, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LPAREN> Lexeme "<<yytext<<" found\n";
 			return LPAREN;
 		}
 
 ")"		{
-			tokenout<<"<RPAREN, "<<yytext<<">\n";
+			//tokenout<<"<RPAREN, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RPAREN> Lexeme "<<yytext<<" found\n";
 			return RPAREN;
 		}
 
 "{"		{
-			tokenout<<"<LCURL, "<<yytext<<">\n";
+			//tokenout<<"<LCURL, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LCURL> Lexeme "<<yytext<<" found\n";
 			return LCURL;
 			
@@ -147,31 +153,31 @@ NEWLINE \n
 
 "}"		{
 			
-			tokenout<<"<RCURL, "<<yytext<<">\n";
+			//tokenout<<"<RCURL, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RCURL> Lexeme "<<yytext<<" found\n";
 			return RCURL;
 		}
 
 
 "["		{
-			tokenout<<"<LSQUARE, "<<yytext<<">\n";
+			//tokenout<<"<LSQUARE, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LSQUARE> Lexeme "<<yytext<<" found\n";
-			return LSQUARE;
+			return LTHIRD;
 		}
 
 "]"		{
-			tokenout<<"<RSQUARE, "<<yytext<<">\n";
+			//tokenout<<"<RSQUARE, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RSQUARE> Lexeme "<<yytext<<" found\n";
-			return RSQUARE;
+			return RTHIRD;
 		}
 ","		{
-			tokenout<<"<COMMA, "<<yytext<<">\n";
+			//tokenout<<"<COMMA, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <COMMA> Lexeme "<<yytext<<" found\n";
 			return COMMA;
 		}
 
 ";"		{
-			tokenout<<"<SEMICOLON, "<<yytext<<">\n";
+			//tokenout<<"<SEMICOLON, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <SEMICOLON> Lexeme "<<yytext<<" found\n";
 			return SEMICOLON;
 		}
@@ -179,15 +185,15 @@ NEWLINE \n
 {DIGITS} {
 				
 				
-				tokenout<<"<CONST_INT, "<<yytext<<">\n";
+				//tokenout<<"<CONST_INT, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <CONST_INT> Lexeme "<<yytext<<" found\n";
 
 
 				//sscanf(yytext,"%lf", &yylval);
 				yylval = atof(yytext);
 
-				cout<<"\'"<<yylval<<"\'\n";
-				return NUMBER;
+				
+				return CONST_INT;
 			}
 {DIGITS}{LETTER}+ {
 				ch.clear();
@@ -197,8 +203,9 @@ NEWLINE \n
 		}
 
 {FLOAT} {
-				tokenout<<"<CONST_FLOAT, "<<yytext<<">\n";
+				//tokenout<<"<CONST_FLOAT, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <CONST_FLOAT> Lexeme "<<yytext<<" found\n";
+				return CONST_FLOAT;
 		}
 {DIGITS}?(\.{DIGITS})*?(E[+-]?{DIGITS})?  {
 				ch.clear();
@@ -216,7 +223,7 @@ NEWLINE \n
 	}
 
 {IDENTIFIER} {
-				tokenout<<"<ID, "<<yytext<<">\n";
+				//tokenout<<"<ID, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <ID> Lexeme "<<yytext<<" found\n";
 				return ID;
 		}
@@ -257,7 +264,7 @@ NEWLINE \n
 			
 			if(ch.size() == 0){
 				if(ch=="\\0"){
-					tokenout<<"<CONST_CHAR, "<<ch<<">\n";
+					//tokenout<<"<CONST_CHAR, "<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme \0 found\n";
 				}
 				else{
@@ -268,7 +275,7 @@ NEWLINE \n
 			else if(ch.size() == 1){
 				
 				logStr+=yytext;
-				tokenout<<"<CONST_CHAR, "<<ch<<">\n";
+				//tokenout<<"<CONST_CHAR, "<<ch<<">\n";
 				logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme "<<ch<<" found\n";	
 			}
 			else{
@@ -336,11 +343,11 @@ NEWLINE \n
 			}
 			else{
 				if(!checkMulti){
-					tokenout<<"<SINGLE LINE STRING, "<<ch<<">\n";
+					//tokenout<<"<SINGLE LINE STRING, "<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <SINGLE LINE STRING> Lexeme "<<logStr<<" found\n";
 				}
 				else {
-					tokenout<<"<MULTI LINE STRING, "<<ch<<">\n";
+					//tokenout<<"<MULTI LINE STRING, "<<ch<<">\n";
 					logout<<"Line# "<<line_count<<": Token <MULTI LINE STRING> Lexeme "<<logStr<<" found\n";
 					checkMulti = 0;
 
