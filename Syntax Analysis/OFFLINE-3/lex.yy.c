@@ -564,13 +564,18 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "1905110.l"
+#line 1 "1905110_lex.l"
 
 
 
 
-#line 10 "1905110.l"
-#include<bits/stdc++.h>
+#line 9 "1905110_lex.l"
+
+
+#include "bits/stdc++.h"
+#include "1905110_SymbolTable.h"
+#include "1905110_SymbolInfo.h"
+#include "1905110_ScopeTable.h"
 #include "y.tab.h"
 
 using namespace std;
@@ -579,11 +584,9 @@ typedef long long ll;
 int line_count=1,interal_line = 0;
 
 
-extern YYSTYPE yylval;
-
 extern ofstream logout;
+//extern SymbolTable *symTable;
 //extern ofstream //tokenout;
-
 //ll buckets = 10;
 int error = 0;
 int checkMulti = 0;
@@ -599,9 +602,8 @@ string makeUpper(string str){
 	return str1;
 }
 
-
-#line 604 "lex.yy.c"
-#line 605 "lex.yy.c"
+#line 606 "lex.yy.c"
+#line 607 "lex.yy.c"
 
 #define INITIAL 0
 #define CONST_CHAR 1
@@ -822,10 +824,10 @@ YY_DECL
 		}
 
 	{
-#line 58 "1905110.l"
+#line 59 "1905110_lex.l"
 
 
-#line 829 "lex.yy.c"
+#line 831 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -884,13 +886,13 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 60 "1905110.l"
+#line 61 "1905110_lex.l"
 {}
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 61 "1905110.l"
+#line 62 "1905110_lex.l"
 {
 			line_count++;
 				
@@ -898,101 +900,105 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 65 "1905110.l"
+#line 66 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <IF> Lexeme "<<yytext<<" found\n"; return IF;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 66 "1905110.l"
+#line 67 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <ELSE> Lexeme "<<yytext<<" found\n"; return ELSE;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 67 "1905110.l"
+#line 68 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <FOR> Lexeme "<<yytext<<" found\n"; return FOR; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 68 "1905110.l"
+#line 69 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <WHILE> Lexeme "<<yytext<<" found\n"; return WHILE;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 69 "1905110.l"
+#line 70 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <DO> Lexeme "<<yytext<<" found\n"; return DO;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 70 "1905110.l"
+#line 71 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <BREAK> Lexeme "<<yytext<<" found\n"; return BREAK;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 71 "1905110.l"
+#line 72 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <INT> Lexeme "<<yytext<<" found\n"; return INT;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 72 "1905110.l"
+#line 73 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <CHAR> Lexeme "<<yytext<<" found\n"; return CHAR;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 73 "1905110.l"
+#line 74 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <FLOAT> Lexeme "<<yytext<<" found\n"; return FLOAT;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 74 "1905110.l"
+#line 75 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <DOUBLE> Lexeme "<<yytext<<" found\n"; return DOUBLE;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 75 "1905110.l"
+#line 76 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <VOID> Lexeme "<<yytext<<" found\n"; return VOID; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 76 "1905110.l"
+#line 77 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <RETURN> Lexeme "<<yytext<<" found\n"; return RETURN;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 77 "1905110.l"
+#line 78 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <SWITCH> Lexeme "<<yytext<<" found\n"; return SWITCH;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 78 "1905110.l"
+#line 79 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <CASE> Lexeme "<<yytext<<" found\n"; return CASE;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 79 "1905110.l"
+#line 80 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <DEFAULT> Lexeme "<<yytext<<" found\n"; return DEFAULT;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 80 "1905110.l"
+#line 81 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <CONTINUE> Lexeme "<<yytext<<" found\n"; return CONTINUE;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 81 "1905110.l"
+#line 82 "1905110_lex.l"
 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" found\n";return PRINTLN;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 83 "1905110.l"
+#line 84 "1905110_lex.l"
 {
 			////tokenout<<"<ADDOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <ADDOP> Lexeme "<<yytext<<" found\n";
+
+				
+			yylval.symInfo = new SymbolInfo(yytext,"ADDOP");
+			// yylval = 10;
 			return ADDOP;
 		}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 90 "1905110.l"
+#line 95 "1905110_lex.l"
 {
 			//tokenout<<"<MULOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <MULOP> Lexeme "<<yytext<<" found\n";
@@ -1001,7 +1007,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 97 "1905110.l"
+#line 102 "1905110_lex.l"
 {
 			//tokenout<<"<INCOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
@@ -1010,7 +1016,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 102 "1905110.l"
+#line 107 "1905110_lex.l"
 {
 			//tokenout<<"<INCOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
@@ -1019,7 +1025,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 108 "1905110.l"
+#line 113 "1905110_lex.l"
 {
 			//tokenout<<"<RELOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RELOP> Lexeme "<<yytext<<" found\n";
@@ -1028,7 +1034,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 114 "1905110.l"
+#line 119 "1905110_lex.l"
 {
 			//tokenout<<"<ASSIGNOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <ASSIGNOP> Lexeme "<<yytext<<" found\n";
@@ -1037,23 +1043,28 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 120 "1905110.l"
+#line 125 "1905110_lex.l"
 {
 			//tokenout<<"<LOGICOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LOGICOP> Lexeme "<<yytext<<" found\n";
+			//yylval.symInfo = new SymbolInfo(yytext,"LOGICOP");
+			return LOGICOP;
 		}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 125 "1905110.l"
+#line 132 "1905110_lex.l"
 {
 			//tokenout<<"<BITOP, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <BITOP> Lexeme "<<yytext<<" found\n";
+			//yylval.symInfo = new SymbolInfo(yytext,"BITOP");
+
+			return BITOP;
 		}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 130 "1905110.l"
+#line 140 "1905110_lex.l"
 {
 			//tokenout<<"<NOT, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <NOT> Lexeme "<<yytext<<" found\n";
@@ -1062,7 +1073,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 136 "1905110.l"
+#line 146 "1905110_lex.l"
 {
 			//tokenout<<"<LPAREN, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LPAREN> Lexeme "<<yytext<<" found\n";
@@ -1071,7 +1082,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 142 "1905110.l"
+#line 152 "1905110_lex.l"
 {
 			//tokenout<<"<RPAREN, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RPAREN> Lexeme "<<yytext<<" found\n";
@@ -1080,7 +1091,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 148 "1905110.l"
+#line 158 "1905110_lex.l"
 {
 			//tokenout<<"<LCURL, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LCURL> Lexeme "<<yytext<<" found\n";
@@ -1090,7 +1101,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 155 "1905110.l"
+#line 165 "1905110_lex.l"
 {
 			
 			//tokenout<<"<RCURL, "<<yytext<<">\n";
@@ -1100,25 +1111,25 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 163 "1905110.l"
+#line 173 "1905110_lex.l"
 {
 			//tokenout<<"<LSQUARE, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <LSQUARE> Lexeme "<<yytext<<" found\n";
-			return LTHIRD;
+			return LSQUARE;
 		}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 169 "1905110.l"
+#line 179 "1905110_lex.l"
 {
 			//tokenout<<"<RSQUARE, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <RSQUARE> Lexeme "<<yytext<<" found\n";
-			return RTHIRD;
+			return RSQUARE;
 		}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 174 "1905110.l"
+#line 184 "1905110_lex.l"
 {
 			//tokenout<<"<COMMA, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <COMMA> Lexeme "<<yytext<<" found\n";
@@ -1127,7 +1138,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 180 "1905110.l"
+#line 190 "1905110_lex.l"
 {
 			//tokenout<<"<SEMICOLON, "<<yytext<<">\n";
 			logout<<"Line# "<<line_count<<": Token <SEMICOLON> Lexeme "<<yytext<<" found\n";
@@ -1136,7 +1147,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 186 "1905110.l"
+#line 196 "1905110_lex.l"
 {
 				
 				
@@ -1145,15 +1156,15 @@ YY_RULE_SETUP
 
 
 				//sscanf(yytext,"%lf", &yylval);
-				yylval = atof(yytext);
-
+				
+				yylval.symInfo = new SymbolInfo(yytext,"CONST_INT");
 				
 				return CONST_INT;
 			}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 199 "1905110.l"
+#line 209 "1905110_lex.l"
 {
 				ch.clear();
 				ch+=yytext;
@@ -1163,16 +1174,19 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 206 "1905110.l"
+#line 216 "1905110_lex.l"
 {
 				//tokenout<<"<CONST_FLOAT, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <CONST_FLOAT> Lexeme "<<yytext<<" found\n";
+				
+				yylval.symInfo = new SymbolInfo(yytext,"CONST_FLOAT");
+				
 				return CONST_FLOAT;
 		}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 211 "1905110.l"
+#line 224 "1905110_lex.l"
 {
 				ch.clear();
 				ch+=yytext;
@@ -1183,7 +1197,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 218 "1905110.l"
+#line 231 "1905110_lex.l"
 {
 				ch.clear();
 				ch+=yytext;
@@ -1194,16 +1208,19 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 226 "1905110.l"
+#line 239 "1905110_lex.l"
 {
 				//tokenout<<"<ID, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <ID> Lexeme "<<yytext<<" found\n";
+
+				yylval.symInfo = new SymbolInfo(yytext,"ID");
+
 				return ID;
 		}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 233 "1905110.l"
+#line 249 "1905110_lex.l"
 {
 			ch.clear();
 			logStr.clear();
@@ -1213,63 +1230,63 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 239 "1905110.l"
+#line 255 "1905110_lex.l"
 {ch+="\t";logStr+="\\t";}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 240 "1905110.l"
+#line 256 "1905110_lex.l"
 {ch+="\n";logStr+="\\n";}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 241 "1905110.l"
+#line 257 "1905110_lex.l"
 {ch+="\\";logStr+="\\\\";}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 242 "1905110.l"
+#line 258 "1905110_lex.l"
 {ch+="\"";logStr+="\\\"";}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 243 "1905110.l"
+#line 259 "1905110_lex.l"
 {ch+="\'";logStr+="\\\'";}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 244 "1905110.l"
+#line 260 "1905110_lex.l"
 {ch+="\a";logStr+="\\\a";}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 245 "1905110.l"
+#line 261 "1905110_lex.l"
 {ch+="\f";logStr+="\\\f";}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 246 "1905110.l"
+#line 262 "1905110_lex.l"
 {ch+="\r";logStr+="\\\r";}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 247 "1905110.l"
+#line 263 "1905110_lex.l"
 {ch+="\b";logStr+="\\\b";}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 248 "1905110.l"
+#line 264 "1905110_lex.l"
 {ch+="\v";logStr+="\\\v";}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 249 "1905110.l"
+#line 265 "1905110_lex.l"
 {ch+="\0";logStr+="\\\0";}
 	YY_BREAK
 case 55:
 /* rule 55 can match eol */
 YY_RULE_SETUP
-#line 252 "1905110.l"
+#line 268 "1905110_lex.l"
 {
 			error++;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
@@ -1278,7 +1295,7 @@ YY_RULE_SETUP
 		}
 	YY_BREAK
 case YY_STATE_EOF(CONST_CHAR):
-#line 258 "1905110.l"
+#line 274 "1905110_lex.l"
 {
 			error++;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
@@ -1288,7 +1305,7 @@ case YY_STATE_EOF(CONST_CHAR):
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 264 "1905110.l"
+#line 280 "1905110_lex.l"
 {
 			
 			if(ch.size() == 0){
@@ -1317,7 +1334,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 290 "1905110.l"
+#line 306 "1905110_lex.l"
 {
 			logStr+=yytext;
 			ch+=yytext;
@@ -1325,7 +1342,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 295 "1905110.l"
+#line 311 "1905110_lex.l"
 {
 		ch.clear();
 		logStr.clear();
@@ -1336,63 +1353,63 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 304 "1905110.l"
+#line 320 "1905110_lex.l"
 {ch+="\t";logStr+="\\t";}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 305 "1905110.l"
+#line 321 "1905110_lex.l"
 {ch+="\n";logStr+="\\n";}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 306 "1905110.l"
+#line 322 "1905110_lex.l"
 {ch+="\\";logStr+="\\\\";}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 307 "1905110.l"
+#line 323 "1905110_lex.l"
 {ch+="\"";logStr+="\\\"";}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 308 "1905110.l"
+#line 324 "1905110_lex.l"
 {ch+="\'";logStr+="\\\'";}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 309 "1905110.l"
+#line 325 "1905110_lex.l"
 {ch+="\a";logStr+="\\\a";}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 310 "1905110.l"
+#line 326 "1905110_lex.l"
 {ch+="\f";logStr+="\\\f";}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 311 "1905110.l"
+#line 327 "1905110_lex.l"
 {ch+="\r";logStr+="\\\r";}
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 312 "1905110.l"
+#line 328 "1905110_lex.l"
 {ch+="\b";logStr+="\\\b";}
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 313 "1905110.l"
+#line 329 "1905110_lex.l"
 {ch+="\v";logStr+="\\\v";}
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 314 "1905110.l"
+#line 330 "1905110_lex.l"
 {ch+="\0";logStr+="\\\0";}
 	YY_BREAK
 case 70:
 /* rule 70 can match eol */
 YY_RULE_SETUP
-#line 316 "1905110.l"
+#line 332 "1905110_lex.l"
 {
 			logStr+=yytext;
 			checkMulti = 1;
@@ -1402,7 +1419,7 @@ YY_RULE_SETUP
 case 71:
 /* rule 71 can match eol */
 YY_RULE_SETUP
-#line 321 "1905110.l"
+#line 337 "1905110_lex.l"
 {
 			error++;
 			line_count+=interal_line;
@@ -1413,7 +1430,7 @@ YY_RULE_SETUP
 		}
 	YY_BREAK
 case YY_STATE_EOF(STRING):
-#line 329 "1905110.l"
+#line 345 "1905110_lex.l"
 {
 			error++;
 			line_count+=interal_line;
@@ -1425,7 +1442,7 @@ case YY_STATE_EOF(STRING):
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 338 "1905110.l"
+#line 354 "1905110_lex.l"
 {
 			
 			logStr+=yytext;
@@ -1452,7 +1469,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 361 "1905110.l"
+#line 377 "1905110_lex.l"
 {
 			
 			ch+=yytext;
@@ -1461,7 +1478,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 367 "1905110.l"
+#line 383 "1905110_lex.l"
 {
 		ch.clear();
 		logStr.clear();
@@ -1473,7 +1490,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 375 "1905110.l"
+#line 391 "1905110_lex.l"
 {
 		ch+=yytext;
 		logStr+=yytext;
@@ -1482,7 +1499,7 @@ YY_RULE_SETUP
 case 76:
 /* rule 76 can match eol */
 YY_RULE_SETUP
-#line 379 "1905110.l"
+#line 395 "1905110_lex.l"
 {
 		ch+=yytext;
 		logStr+=yytext;
@@ -1492,7 +1509,7 @@ YY_RULE_SETUP
 case 77:
 /* rule 77 can match eol */
 YY_RULE_SETUP
-#line 384 "1905110.l"
+#line 400 "1905110_lex.l"
 {
 		
 			logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<logStr<<" found\n";
@@ -1504,7 +1521,7 @@ YY_RULE_SETUP
 	}
 	YY_BREAK
 case YY_STATE_EOF(S_COMMENT):
-#line 393 "1905110.l"
+#line 409 "1905110_lex.l"
 {
 		line_count+=interal_line;
 		logout<<"Line# "<<line_count<<": Token <SINGLE LINE COMMENT> Lexeme "<<ch<<" found\n";
@@ -1515,7 +1532,7 @@ case YY_STATE_EOF(S_COMMENT):
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 401 "1905110.l"
+#line 417 "1905110_lex.l"
 {
 		logStr.clear();
 		logStr+=yytext;
@@ -1525,7 +1542,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 407 "1905110.l"
+#line 423 "1905110_lex.l"
 {
 		logStr+=yytext;
 	}
@@ -1533,7 +1550,7 @@ YY_RULE_SETUP
 case 80:
 /* rule 80 can match eol */
 YY_RULE_SETUP
-#line 410 "1905110.l"
+#line 426 "1905110_lex.l"
 {
 		
 		logStr+=yytext;
@@ -1542,7 +1559,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 415 "1905110.l"
+#line 431 "1905110_lex.l"
 {
 		logStr+=yytext;
 		logout<<"Line# "<<line_count<<": Token <MULTI LINE COMMENT> Lexeme "<<logStr<<" found\n";
@@ -1552,7 +1569,7 @@ YY_RULE_SETUP
 	}
 	YY_BREAK
 case YY_STATE_EOF(M_COMMENT):
-#line 422 "1905110.l"
+#line 438 "1905110_lex.l"
 {
 		error++;
 		line_count+=interal_line;
@@ -1563,7 +1580,7 @@ case YY_STATE_EOF(M_COMMENT):
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 430 "1905110.l"
+#line 446 "1905110_lex.l"
 {
 		ch.clear();
 		ch+=yytext;
@@ -1574,10 +1591,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 439 "1905110.l"
+#line 455 "1905110_lex.l"
 ECHO;
 	YY_BREAK
-#line 1581 "lex.yy.c"
+#line 1598 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2582,4 +2599,4 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 439 "1905110.l"
+#line 455 "1905110_lex.l"

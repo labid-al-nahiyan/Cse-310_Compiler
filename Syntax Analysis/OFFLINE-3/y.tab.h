@@ -56,48 +56,42 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     DO = 258,                      /* DO  */
     CHAR = 259,                    /* CHAR  */
-    BREAK = 260,                   /* BREAK  */
-    DOUBLE = 261,                  /* DOUBLE  */
-    SWITCH = 262,                  /* SWITCH  */
-    CASE = 263,                    /* CASE  */
-    DEFAULT = 264,                 /* DEFAULT  */
-    CONTINUE = 265,                /* CONTINUE  */
-    NEWLINE = 266,                 /* NEWLINE  */
-    SEMICOLON = 267,               /* SEMICOLON  */
-    ID = 268,                      /* ID  */
-    PLUS = 269,                    /* PLUS  */
-    MINUS = 270,                   /* MINUS  */
-    SLASH = 271,                   /* SLASH  */
-    ASTERISK = 272,                /* ASTERISK  */
-    LPAREN = 273,                  /* LPAREN  */
-    RPAREN = 274,                  /* RPAREN  */
-    LCURL = 275,                   /* LCURL  */
-    RCURL = 276,                   /* RCURL  */
-    LSQUARE = 277,                 /* LSQUARE  */
-    RSQUARE = 278,                 /* RSQUARE  */
-    COMMA = 279,                   /* COMMA  */
-    NOT = 280,                     /* NOT  */
-    KEYWORD = 281,                 /* KEYWORD  */
-    CONST_INT = 282,               /* CONST_INT  */
-    CONST_FLOAT = 283,             /* CONST_FLOAT  */
-    IF = 284,                      /* IF  */
-    FOR = 285,                     /* FOR  */
-    ELSE = 286,                    /* ELSE  */
-    INT = 287,                     /* INT  */
-    FLOAT = 288,                   /* FLOAT  */
-    VOID = 289,                    /* VOID  */
-    LTHIRD = 290,                  /* LTHIRD  */
-    RTHIRD = 291,                  /* RTHIRD  */
-    WHILE = 292,                   /* WHILE  */
-    PRINTLN = 293,                 /* PRINTLN  */
-    RETURN = 294,                  /* RETURN  */
-    ADDOP = 295,                   /* ADDOP  */
-    LOGICOP = 296,                 /* LOGICOP  */
-    DECOP = 297,                   /* DECOP  */
-    RELOP = 298,                   /* RELOP  */
-    ASSIGNOP = 299,                /* ASSIGNOP  */
-    MULOP = 300,                   /* MULOP  */
-    INCOP = 301                    /* INCOP  */
+    IF = 260,                      /* IF  */
+    FOR = 261,                     /* FOR  */
+    ELSE = 262,                    /* ELSE  */
+    INT = 263,                     /* INT  */
+    FLOAT = 264,                   /* FLOAT  */
+    VOID = 265,                    /* VOID  */
+    BREAK = 266,                   /* BREAK  */
+    DOUBLE = 267,                  /* DOUBLE  */
+    PRINTLN = 268,                 /* PRINTLN  */
+    RETURN = 269,                  /* RETURN  */
+    SWITCH = 270,                  /* SWITCH  */
+    CASE = 271,                    /* CASE  */
+    DEFAULT = 272,                 /* DEFAULT  */
+    WHILE = 273,                   /* WHILE  */
+    CONTINUE = 274,                /* CONTINUE  */
+    NEWLINE = 275,                 /* NEWLINE  */
+    SEMICOLON = 276,               /* SEMICOLON  */
+    LPAREN = 277,                  /* LPAREN  */
+    RPAREN = 278,                  /* RPAREN  */
+    LCURL = 279,                   /* LCURL  */
+    RCURL = 280,                   /* RCURL  */
+    LSQUARE = 281,                 /* LSQUARE  */
+    RSQUARE = 282,                 /* RSQUARE  */
+    COMMA = 283,                   /* COMMA  */
+    NOT = 284,                     /* NOT  */
+    DECOP = 285,                   /* DECOP  */
+    RELOP = 286,                   /* RELOP  */
+    ASSIGNOP = 287,                /* ASSIGNOP  */
+    INCOP = 288,                   /* INCOP  */
+    ADDOP = 289,                   /* ADDOP  */
+    MULOP = 290,                   /* MULOP  */
+    CONST_INT = 291,               /* CONST_INT  */
+    CONST_FLOAT = 292,             /* CONST_FLOAT  */
+    LOGICOP = 293,                 /* LOGICOP  */
+    BITOP = 294,                   /* BITOP  */
+    ID = 295                       /* ID  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -108,52 +102,57 @@ extern int yydebug;
 #define YYUNDEF 257
 #define DO 258
 #define CHAR 259
-#define BREAK 260
-#define DOUBLE 261
-#define SWITCH 262
-#define CASE 263
-#define DEFAULT 264
-#define CONTINUE 265
-#define NEWLINE 266
-#define SEMICOLON 267
-#define ID 268
-#define PLUS 269
-#define MINUS 270
-#define SLASH 271
-#define ASTERISK 272
-#define LPAREN 273
-#define RPAREN 274
-#define LCURL 275
-#define RCURL 276
-#define LSQUARE 277
-#define RSQUARE 278
-#define COMMA 279
-#define NOT 280
-#define KEYWORD 281
-#define CONST_INT 282
-#define CONST_FLOAT 283
-#define IF 284
-#define FOR 285
-#define ELSE 286
-#define INT 287
-#define FLOAT 288
-#define VOID 289
-#define LTHIRD 290
-#define RTHIRD 291
-#define WHILE 292
-#define PRINTLN 293
-#define RETURN 294
-#define ADDOP 295
-#define LOGICOP 296
-#define DECOP 297
-#define RELOP 298
-#define ASSIGNOP 299
-#define MULOP 300
-#define INCOP 301
+#define IF 260
+#define FOR 261
+#define ELSE 262
+#define INT 263
+#define FLOAT 264
+#define VOID 265
+#define BREAK 266
+#define DOUBLE 267
+#define PRINTLN 268
+#define RETURN 269
+#define SWITCH 270
+#define CASE 271
+#define DEFAULT 272
+#define WHILE 273
+#define CONTINUE 274
+#define NEWLINE 275
+#define SEMICOLON 276
+#define LPAREN 277
+#define RPAREN 278
+#define LCURL 279
+#define RCURL 280
+#define LSQUARE 281
+#define RSQUARE 282
+#define COMMA 283
+#define NOT 284
+#define DECOP 285
+#define RELOP 286
+#define ASSIGNOP 287
+#define INCOP 288
+#define ADDOP 289
+#define MULOP 290
+#define CONST_INT 291
+#define CONST_FLOAT 292
+#define LOGICOP 293
+#define BITOP 294
+#define ID 295
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+union YYSTYPE
+{
+#line 39 "1905110_parser.y"
+
+    SymbolInfo *symInfo;
+    string *str;
+    vector<SymbolInfo*>* str_vector;
+
+#line 153 "y.tab.h"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif

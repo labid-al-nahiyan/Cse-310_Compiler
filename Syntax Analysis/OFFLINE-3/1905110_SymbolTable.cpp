@@ -1,30 +1,14 @@
-class SymbolTable
-{
-private:
-    ll id = 0;
-    ll num_buckets=0;
-    ScopeTable *currentScope = NULL ;
-public:
-    SymbolTable(long long);
-    ~SymbolTable();
+#include "1905110_SymbolTable.h"
+using namespace std;
 
-    ScopeTable* EnterScope();
-    ScopeTable* ExitScope();
-    void ExitAllScope();
-    ScopeTable* getCurrentScope();
-    bool Insert(string , string , ofstream& );
-    bool Remove(string);
-    SymbolInfo* LookUp(string);
-    void PrintCurrent(ofstream& logout);
-    void PrintAll(ofstream& logout);
-};
-SymbolTable::SymbolTable(ll num_buckets){
-    this->num_buckets = num_buckets;
+SymbolTable::SymbolTable(long long num_buckets){
+    SymbolTable::num_buckets = num_buckets;
 }
 ScopeTable* SymbolTable::EnterScope(){
-    this->id++;
+    SymbolTable::id++;
     //cout<<"\tScopeTable# "<<this->id<<" created\n";
-    ScopeTable *temp = new ScopeTable(num_buckets,id,currentScope);
+    ScopeTable *temp = new ScopeTable(SymbolTable::num_buckets,SymbolTable::id,SymbolTable::currentScope);
+    
     currentScope = temp;
     return currentScope;
 }
@@ -48,14 +32,14 @@ void SymbolTable::ExitAllScope(){
 ScopeTable* SymbolTable::getCurrentScope(){
     return this->currentScope;
 }
-bool SymbolTable::Insert(string name, string type,ofstream& logout){
+bool SymbolTable::Insert(string name, string type, string returnType, ofstream& logout){
     if(currentScope == NULL ){
       //  cout<<"\tCreate ScopeTable First\n";
         return 0;
     }
 
     ScopeTable *temp = currentScope;
-    return currentScope->Insert(name,type,logout);
+    return currentScope->Insert(name,type,returnType, logout);
 }
 bool SymbolTable::Remove(string name){
     if(currentScope == NULL ){

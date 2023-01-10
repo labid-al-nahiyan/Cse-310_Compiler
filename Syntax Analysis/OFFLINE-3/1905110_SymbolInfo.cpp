@@ -1,42 +1,41 @@
-#include<string>
+#include "1905110_SymbolInfo.h"
 
-using namespace std;
-typedef long long ll ;
-
-
-class SymbolInfo
-{
-private:
-    string name,type;
-    SymbolInfo  *next ;
-public:
-    SymbolInfo();
-    SymbolInfo(string, string );
-
-    void set_name(string name){
-        this->name = name;
-    }
-    void set_type(string type){
-        this->type = type;
-    }
-    string get_name(){
-        return this->name;
-    }
-    string get_type(){
-        return this->type;
-    }
-    void set_next(SymbolInfo *next){
-        this->next = next;
-    }
-    SymbolInfo* get_next(){
-        return this->next;
-    }
-};
 SymbolInfo::SymbolInfo(){
+    
 }
 SymbolInfo::SymbolInfo(string name,string type){
-    this->name = name;
-    this->type = type;
-    this->next = NULL ;
+    SymbolInfo::name = name;
+    SymbolInfo::type = type;
+    SymbolInfo::returnType = "";
+    SymbolInfo::next = NULL ;
 }
-
+SymbolInfo::SymbolInfo(string name,string type,string returnType){
+    SymbolInfo::name = name;
+    SymbolInfo::type = type;
+    SymbolInfo::returnType = returnType;
+    SymbolInfo::next = NULL ;
+}
+SymbolInfo* SymbolInfo::get_next(){
+        return next;
+}
+void SymbolInfo::set_next(SymbolInfo *next){
+        SymbolInfo::next = next;
+    }
+string SymbolInfo::get_type(){
+        return SymbolInfo::type;
+    }
+string SymbolInfo::get_name(){
+        return SymbolInfo::name;
+    }
+string SymbolInfo::get_returnType(){
+        return SymbolInfo::returnType;
+    }
+void SymbolInfo::set_type(string type){
+        SymbolInfo::type = type;
+    }
+void SymbolInfo::set_name(string name){
+        SymbolInfo::name = name;
+    }
+void SymbolInfo::set_returnType(string returnType){
+        SymbolInfo::returnType = returnType;
+    }

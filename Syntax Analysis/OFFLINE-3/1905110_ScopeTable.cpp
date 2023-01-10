@@ -1,30 +1,16 @@
-class ScopeTable
-{
-private:
+#include "1905110_ScopeTable.h"
 
-    ll  num_buckets ;
-    ll  id;
-    SymbolInfo **symbolArray ;
-    ScopeTable *parent_scope;
-    ll SDBMHash(string str);
 
-public:
-    ScopeTable(ll num_buckets ,ll id,  ScopeTable *parent_scope);
-    bool Insert(string ,string,ofstream&);
-    SymbolInfo* LookUp(string);
-    bool Delete(string);
-    void Print(ofstream& logout);
-    ll get_id(){
-        return this->id;
-    }
-    ll get_numbucket(){
+typedef long long ll;
+
+long long  ScopeTable::get_id(){
+    return this->id;
+}
+long long  ScopeTable::get_numbucket(){
         return this->num_buckets;
     }
-    ScopeTable* getParentScope();
-
-    ~ScopeTable();
-};
- ll ScopeTable::SDBMHash(string str){
+    
+ll ScopeTable::SDBMHash(string str){
 
          ll hash = 0;
          ll i = 0;
@@ -39,16 +25,16 @@ public:
     }
 ScopeTable::ScopeTable(ll num_buckets ,ll id, ScopeTable* parent_scope){
 
-    this->num_buckets = num_buckets;
-    this->id = id;
+    ScopeTable::num_buckets = num_buckets;
+    ScopeTable::id = id;
     symbolArray = new SymbolInfo*[num_buckets];
 
-    for(ll i=0;i<(this->num_buckets);i++){
+    for(ll i=0;i<(ScopeTable::num_buckets);i++){
         symbolArray[i] = NULL ;
     }
-    this->parent_scope = parent_scope;
+    ScopeTable::parent_scope = parent_scope;
 }
-bool ScopeTable::Insert(string name,string type,ofstream& logout){
+bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logout){
 
     ll hash_value = SDBMHash(name);
 
@@ -70,10 +56,8 @@ bool ScopeTable::Insert(string name,string type,ofstream& logout){
         }
     }
 
-
-
     if(newSymbol != NULL ){
-         logout<<"\t"<<name<<" already exisits in the current ScopeTable\n";
+         if(newSymbol->get_returnType()!="FUNCTION")logout<<"\t"<<name<<" already exisits in the current ScopeTable\n";
          return 0;
     }
     else{
@@ -81,7 +65,9 @@ bool ScopeTable::Insert(string name,string type,ofstream& logout){
          ll count = 0;
          ll hash_value = SDBMHash(name),check = 0;
 
-         SymbolInfo *temp = new SymbolInfo(name,type);
+         SymbolInfo *temp;
+         if(returnType=="") temp = new SymbolInfo(name,type);
+         else temp = new SymbolInfo(name,type,returnType);
 
          if(symbolArray[hash_value]==NULL ){
              symbolArray[hash_value] = temp;
@@ -194,7 +180,12 @@ void ScopeTable::Print(ofstream & logout){
         }
         while(temp!=NULL ){
 
-            logout<<"<"<<temp->get_name()<<","<<temp->get_type()<<"> ";
+            logout<<"<"<<temp->get_name()<<","<<temp->get_type();
+
+            if(temp->get_returnType()!=""){
+                logout<<","<<temp->get_returnType();
+            }
+            logout<<"> ";
 
             temp = temp->get_next();
         }
@@ -211,4 +202,3 @@ ScopeTable::~ScopeTable(){
     }
     delete[] symbolArray;
 }
-
