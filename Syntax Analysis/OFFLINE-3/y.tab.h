@@ -91,7 +91,8 @@ extern int yydebug;
     CONST_FLOAT = 292,             /* CONST_FLOAT  */
     LOGICOP = 293,                 /* LOGICOP  */
     BITOP = 294,                   /* BITOP  */
-    ID = 295                       /* ID  */
+    ID = 295,                      /* ID  */
+    LOWER_THAN_ELSE = 296          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -138,18 +139,18 @@ extern int yydebug;
 #define LOGICOP 293
 #define BITOP 294
 #define ID 295
+#define LOWER_THAN_ELSE 296
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 39 "1905110_parser.y"
+#line 56 "1905110_parser.y"
 
     SymbolInfo *symInfo;
-    string *str;
-    vector<SymbolInfo*>* str_vector;
+    
 
-#line 153 "y.tab.h"
+#line 154 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

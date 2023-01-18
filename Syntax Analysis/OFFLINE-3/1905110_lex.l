@@ -38,9 +38,13 @@ string makeUpper(string str){
 	return str1;
 }
 
+void terminalSymbol(string str1,string str2, int line){
+	logout<<"Line# "<<line_count<<": Token <"<<str1<<"> Lexeme "<<str2<<" found\n";
+    yylval.symInfo = new SymbolInfo(str1,str2,line);
+}
+
 %}
 
-KEYWORD if|for|do|int|float|void|switch|default|else|while|break|char|double|return|case|continue
 WHITESPACE [ \t\f\r\v]+ 
 LETTER [a-zA-Z]
 RELOP "<"|"<="|">"|">="|"=="|"!="   
@@ -63,30 +67,77 @@ NEWLINE \n
 			line_count++;
 				
 		}
-if       {logout<<"Line# "<<line_count<<": Token <IF> Lexeme "<<yytext<<" found\n"; return IF;}
-else     {logout<<"Line# "<<line_count<<": Token <ELSE> Lexeme "<<yytext<<" found\n"; return ELSE;}
-for      {logout<<"Line# "<<line_count<<": Token <FOR> Lexeme "<<yytext<<" found\n"; return FOR; }
-while    {logout<<"Line# "<<line_count<<": Token <WHILE> Lexeme "<<yytext<<" found\n"; return WHILE;}
-do       {logout<<"Line# "<<line_count<<": Token <DO> Lexeme "<<yytext<<" found\n"; return DO;}
-break    {logout<<"Line# "<<line_count<<": Token <BREAK> Lexeme "<<yytext<<" found\n"; return BREAK;}
-int      {logout<<"Line# "<<line_count<<": Token <INT> Lexeme "<<yytext<<" found\n"; return INT;}
-char     {logout<<"Line# "<<line_count<<": Token <CHAR> Lexeme "<<yytext<<" found\n"; return CHAR;}
-float    {logout<<"Line# "<<line_count<<": Token <FLOAT> Lexeme "<<yytext<<" found\n"; return FLOAT;}
-double   {logout<<"Line# "<<line_count<<": Token <DOUBLE> Lexeme "<<yytext<<" found\n"; return DOUBLE;}
-void     {logout<<"Line# "<<line_count<<": Token <VOID> Lexeme "<<yytext<<" found\n"; return VOID; }
-return   {logout<<"Line# "<<line_count<<": Token <RETURN> Lexeme "<<yytext<<" found\n"; return RETURN;}
-switch   {logout<<"Line# "<<line_count<<": Token <SWITCH> Lexeme "<<yytext<<" found\n"; return SWITCH;}
-case     {logout<<"Line# "<<line_count<<": Token <CASE> Lexeme "<<yytext<<" found\n"; return CASE;}
-default  {logout<<"Line# "<<line_count<<": Token <DEFAULT> Lexeme "<<yytext<<" found\n"; return DEFAULT;}
-continue {logout<<"Line# "<<line_count<<": Token <CONTINUE> Lexeme "<<yytext<<" found\n"; return CONTINUE;}
-printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" found\n";return PRINTLN;}
+if       {	
+			terminalSymbol("IF","if",line_count);
+			return IF;
+		 }
+else     {
+			terminalSymbol("ELSE","else",line_count);
+			return ELSE; 
+		 }
+for      {
+			terminalSymbol("FOR","for",line_count);
+			return FOR; 
+		 }
+while    {
+			terminalSymbol("WHILE","while",line_count);
+			return WHILE; 
+		 }
+do       {
+			terminalSymbol("DO","do",line_count);
+			return DO; 
+		 }
+break    {
+			terminalSymbol("BREAK","break",line_count);
+			return BREAK; 
+		 }
+int      {
+			terminalSymbol("INT","int",line_count);
+			return INT; 
+		 }
+char     {
+			terminalSymbol("CHAR","char",line_count);
+			return CHAR; 
+		 }
+float    {
+			terminalSymbol("FLOAT","float",line_count);
+			return FLOAT; 
+		 }
+double   {
+			terminalSymbol("Double","double",line_count);
+			return DOUBLE; 
+		 }
+void     {
+			terminalSymbol("VOID","void",line_count);
+			return VOID; 
+		 }
+return   {	
+	
+			terminalSymbol("RETURN","return",line_count);
+			return RETURN;}
+switch   {	
+			terminalSymbol("SWITCH","switch",line_count);
+			return SWITCH;}
+case     {
+			terminalSymbol("CASE","case",line_count);
+			return CASE;}
+default  {
+			terminalSymbol("DEFAULT","default",line_count);
+			return DEFAULT;
+		 }
+continue {
+			terminalSymbol("CONTINUE","continue",line_count);
+			return CONTINUE;
+		 }
+printf	 {
+			terminalSymbol("PRINTLN","printf",line_count);
+			return PRINTLN;
+		 }
 
 {ADDOP}		{
 			////tokenout<<"<ADDOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <ADDOP> Lexeme "<<yytext<<" found\n";
-
-				
-			yylval.symInfo = new SymbolInfo(yytext,"ADDOP");
+			
+			terminalSymbol("ADDOP",yytext,line_count);
 			// yylval = 10;
 			return ADDOP;
 		}
@@ -94,70 +145,67 @@ printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" fo
 
 {MULOP} {
 			//tokenout<<"<MULOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <MULOP> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("MULOP",yytext,line_count);
 			return MULOP;
 		}
 
 
 {INCOP} {
 			//tokenout<<"<INCOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("INCOP",yytext,line_count);
 			return INCOP;
 		}
 {DECOP} {
 			//tokenout<<"<INCOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <INCOP> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("DECOP",yytext,line_count);
 			return DECOP;
 		}
 
 {RELOP} {
 			//tokenout<<"<RELOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <RELOP> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("RELOP",yytext,line_count);
 			return RELOP;
 		}
 
 "="		{
 			//tokenout<<"<ASSIGNOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <ASSIGNOP> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("ASSIGNOP","=",line_count);
 			return ASSIGNOP;
 		}
 
 {LOGICOP}	{
 			//tokenout<<"<LOGICOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <LOGICOP> Lexeme "<<yytext<<" found\n";
-			//yylval.symInfo = new SymbolInfo(yytext,"LOGICOP");
+			terminalSymbol("LOGICOP",yytext,line_count);
 			return LOGICOP;
 		}
 
 {BITOP} {
 			//tokenout<<"<BITOP, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <BITOP> Lexeme "<<yytext<<" found\n";
-			//yylval.symInfo = new SymbolInfo(yytext,"BITOP");
-
+			terminalSymbol("BITOP",yytext,line_count);
 			return BITOP;
 		}
 
 "!"		{
 			//tokenout<<"<NOT, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <NOT> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("NOT","!",line_count);
 			return NOT;
 		}
 
 "("		{
 			//tokenout<<"<LPAREN, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <LPAREN> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("LPAREN","(",line_count);
 			return LPAREN;
 		}
 
 ")"		{
 			//tokenout<<"<RPAREN, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <RPAREN> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("RPAREN",")",line_count);
 			return RPAREN;
 		}
 
 "{"		{
 			//tokenout<<"<LCURL, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <LCURL> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("LCURL","{",line_count);
 			return LCURL;
 			
 		}
@@ -165,31 +213,31 @@ printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" fo
 "}"		{
 			
 			//tokenout<<"<RCURL, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <RCURL> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("RCURL","}",line_count);
 			return RCURL;
 		}
 
 
 "["		{
 			//tokenout<<"<LSQUARE, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <LSQUARE> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("LSQUARE","[",line_count);
 			return LSQUARE;
 		}
 
 "]"		{
 			//tokenout<<"<RSQUARE, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <RSQUARE> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("RSQUARE","]",line_count);
 			return RSQUARE;
 		}
 ","		{
 			//tokenout<<"<COMMA, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <COMMA> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("COMMA",",",line_count);
 			return COMMA;
 		}
 
 ";"		{
 			//tokenout<<"<SEMICOLON, "<<yytext<<">\n";
-			logout<<"Line# "<<line_count<<": Token <SEMICOLON> Lexeme "<<yytext<<" found\n";
+			terminalSymbol("SEMICOLON",";",line_count);
 			return SEMICOLON;
 		}
 		
@@ -197,13 +245,9 @@ printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" fo
 				
 				
 				//tokenout<<"<CONST_INT, "<<yytext<<">\n";
-				logout<<"Line# "<<line_count<<": Token <CONST_INT> Lexeme "<<yytext<<" found\n";
-
-
-				//sscanf(yytext,"%lf", &yylval);
 				
-				yylval.symInfo = new SymbolInfo(yytext,"CONST_INT");
-				
+				terminalSymbol("CONST_INT",yytext,line_count);
+
 				return CONST_INT;
 			}
 {DIGITS}{LETTER}+ {
@@ -215,13 +259,12 @@ printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" fo
 
 {FLOAT} {
 				//tokenout<<"<CONST_FLOAT, "<<yytext<<">\n";
-				logout<<"Line# "<<line_count<<": Token <CONST_FLOAT> Lexeme "<<yytext<<" found\n";
 				
-				yylval.symInfo = new SymbolInfo(yytext,"CONST_FLOAT");
-				
+				terminalSymbol("CONST_FLOAT",yytext,line_count);
 				return CONST_FLOAT;
+				
 		}
-{DIGITS}?(\.{DIGITS})*?(E[+-]?{DIGITS})?  {
+{DIGITS}?((\.)+{DIGITS})*?(E[+-]?{DIGITS})?  {
 				ch.clear();
 				ch+=yytext;
 				error++;
@@ -240,7 +283,9 @@ printf	 {logout<<"Line# "<<line_count<<": Token <PRINTLN> Lexeme "<<yytext<<" fo
 				//tokenout<<"<ID, "<<yytext<<">\n";
 				logout<<"Line# "<<line_count<<": Token <ID> Lexeme "<<yytext<<" found\n";
 
-				yylval.symInfo = new SymbolInfo(yytext,"ID");
+				yylval.symInfo = new SymbolInfo("ID",yytext,line_count);
+
+				//terminalSymbol("ID",yytext,line_count);
 
 				return ID;
 		}

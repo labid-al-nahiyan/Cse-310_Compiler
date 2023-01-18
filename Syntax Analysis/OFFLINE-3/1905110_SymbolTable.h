@@ -23,6 +23,7 @@ public:
     bool Insert(string , string , string , ofstream& );
     bool Remove(string);
     SymbolInfo* LookUp(string);
+    SymbolInfo* LookUpCurrent(string);
     void PrintCurrent(ofstream& logout);
     void PrintAll(ofstream& logout);
 };

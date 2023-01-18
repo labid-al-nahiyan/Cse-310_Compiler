@@ -10,261 +10,1032 @@ typedef long long ll;
 
 ofstream logout;
 ofstream errout;
+ofstream parsetree;
 
 extern int line_count,interal_line,error;
 extern FILE *yyin;
 
 
 
-SymbolTable *symTable = new SymbolTable(28);
+SymbolTable *symTable = new SymbolTable(12);
 ScopeTable *sc = symTable->EnterScope();
-vector<SymbolInfo> para; 
+vector<SymbolInfo> parameter; 
+vector<SymbolInfo> declaredVar;
+int parameterNum = 0;
 
 int yylex(void);
 
 void yyerror( string s){
 	//printf("%s\n",s);
 }
-void freeSymbolInfoVector(vector<SymbolInfo*>* list){
-                                for(SymbolInfo* info: *list){
-                                    delete info;
-                                }
-                                delete list;
+void UndeclaredVariable(string name){
+    SymbolInfo *s = NULL;
+    s = symTable->LookUp(name);  
+    if(s==NULL){
+        errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<name<< "\n";
+    } 
 }
 
+void freeVector(vector<SymbolInfo*>*symInfo){
+    for(SymbolInfo* info: *symInfo){
+		delete info;
+	}
+	delete symInfo;
+}
 
+void destroyChild(SymbolInfo* parent){
+    for(SymbolInfo* info : *parent->get_child()){
+        destroyChild(info);
+        delete info;
+    }
+    delete parent->get_child();
+}
 
 %}
 
 %union{
     SymbolInfo *symInfo;
-    string *str;
-    vector<SymbolInfo*>* str_vector;
+    
 }
 
-%token DO CHAR IF FOR ELSE INT FLOAT VOID BREAK DOUBLE PRINTLN RETURN SWITCH CASE DEFAULT WHILE CONTINUE NEWLINE SEMICOLON LPAREN RPAREN LCURL RCURL LSQUARE RSQUARE COMMA NOT DECOP RELOP ASSIGNOP INCOP
+%token<symInfo> DO CHAR IF FOR ELSE INT FLOAT VOID BREAK DOUBLE PRINTLN RETURN SWITCH CASE DEFAULT WHILE CONTINUE NEWLINE SEMICOLON LPAREN RPAREN LCURL RCURL LSQUARE RSQUARE COMMA NOT DECOP RELOP ASSIGNOP INCOP
 %token<symInfo> ADDOP MULOP CONST_INT CONST_FLOAT LOGICOP BITOP ID
-%type argument_list 
-%type<symInfo>  factor unary_expression term rel_expression logic_expression arguments start program unit func_declaration func_definition parameter_list compound_statement var_declaration statement statements variable
-%type<str> type_specifier
-%type<str_vector> declaration_list
+%type<symInfo> argument_list factor expression unary_expression simple_expression expression_statement term rel_expression logic_expression arguments start program unit func_in func_declaration func_definition parameter_list compound_statement var_declaration statement statements variable
+%type<symInfo> type_specifier LCURL_
+%type<symInfo> declaration_list
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 %%
-start: program          {logout<<"start : program\n";}
+start: program          
+       {
+         logout<<"start : program\n";
+          $$ = new SymbolInfo("start","program");
+          $$->set_start($1->get_start());
+          $$->set_end($1->get_end());
+          $$->set_child($1);
+
+          $$->printChild(0,parsetree);
+          
+          destroyChild($$);
+       }
      ;
-program: program unit   {logout<<"program : program unit\n";}
-    | unit              {logout<<"program : unit\n";}
+program: program unit   
+        {
+            logout<<"program : program unit\n";
+            $$ = new SymbolInfo("program","program unit");
+            
+            $$->set_child($1);
+            $$->set_child($2);
+
+            $$->set_start($1->get_start());
+            $$->set_end($2->get_end());
+        }
+    | unit              
+        {
+            logout<<"program : unit\n";
+            $$ = new SymbolInfo("program","unit");
+            $$->set_start($1->get_start());
+            $$->set_end($1->get_end());
+            $$->set_child($1);
+        }
     ; 
-unit : var_declaration  {logout<<"unit : var_declaration\n";}
-    | func_declaration  {logout<<"unit : func_declaration\n";}
-    | func_definition   {logout<<"unit : func_definition \n";}
+unit : var_declaration  
+        {
+            logout<<"unit : var_declaration\n";
+            $$ = new SymbolInfo("unit","var_declaration");
+            $$->set_start($1->get_start());
+            $$->set_end($1->get_end());
+            $$->set_child($1);
+        }
+    | func_declaration  
+        {
+            logout<<"unit : func_declaration\n";
+            $$ = new SymbolInfo("unit","func_declaration");
+            $$->set_start($1->get_start());
+            $$->set_end($1->get_end());
+            $$->set_child($1);
+        }
+    | func_definition   
+        {
+            logout<<"unit : func_definition\n";
+            $$ = new SymbolInfo("unit","func_definition");
+            $$->set_start($1->get_start());
+            $$->set_end($1->get_end());
+            $$->set_child($1);
+        }
     ;
 
 
-func_in : type_specifier ID {symTable->Insert(($2->get_name()),*$1,"FUNCTION",logout);} LPAREN
+func_in : type_specifier ID LPAREN
+          {
+            int x = symTable->Insert(($2->get_type()),"FUNCTION",$1->get_returnType(),logout);
+
+            if(!x){
+                SymbolInfo *s = symTable->LookUpCurrent($2->get_type());          
+
+                if( s->get_type() != "FUNCTION"){
+
+                    errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
+                }
+
+                else if($1->get_returnType() != s->get_returnType()){
+                    errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
+                }
+
+                else{
+                //    errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<($2->get_type())<<"'\n";
+                }
+            }
+    
+            $$ = new SymbolInfo(($2->get_type()),$1->get_returnType());
+            
+            $$->set_child($1);
+            $$->set_child($2);
+            $$->set_child($3);
+
+            $$->set_start($1->get_start());
+            $$->set_end($3->get_end());
+
+          }
         ;
-func_declaration: func_in parameter_list RPAREN SEMICOLON {
-                                                                                logout<<"func_declaration: type_specifier ID LPAREN parameter_list RPAREN SEMICOLON\n";
-                                                          }
-                | func_in RPAREN SEMICOLON                {
-                                                              logout<<"func_declaration: type_specifier ID LPAREN RPAREN SEMICOLON\n";
-                                                          }
+
+func_declaration: func_in parameter_list RPAREN SEMICOLON 
+                {
+                    logout<<"func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON\n";
+                    SymbolInfo *s = symTable->LookUp(($1->get_name()));
+                    s->set_param(parameter);
+                    parameter.clear();
+
+                    $$ = new SymbolInfo("func_declaration","type_specifier ID LPAREN parameter_list RPAREN SEMICOLON");
+                    
+                    vector<SymbolInfo*>* sI = $1->get_child();
+
+                    for(SymbolInfo* info : *sI ){
+                    $$->set_child(info);
+                    }
+
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($4->get_end());
+
+                }
+                | func_in RPAREN SEMICOLON               
+                {
+                    logout<<"func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON\n";
+                    SymbolInfo *s = symTable->LookUp(($1->get_name()));
+                    s->set_param(parameter);
+                    parameter.clear();
+
+                    $$ = new SymbolInfo("func_declaration","type_specifier ID LPAREN RPAREN SEMICOLON");
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                    
+                    vector<SymbolInfo*>* sI = $1->get_child();
+
+                    for(SymbolInfo* info : *sI ){
+                    $$->set_child(info);
+                    }
+
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+
+                }
                 ;
-func_definition : func_in  parameter_list RPAREN compound_statement {
-                                                                        logout<<"func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement\n";
-                                                                    }
-                | func_in  RPAREN compound_statement                {   
-                                                                        logout<<"func_definition : type_specifier ID LPAREN RPAREN compound_statement \n";                                          
-                                                                    }
+func_definition : func_in parameter_list RPAREN compound_statement 
+                  {
+                     SymbolInfo *s = symTable->LookUp(($1->get_name()));
+                     s->set_param(parameter);
+                     parameter.clear();
+                     logout<<"func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement\n";
+
+                     $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN parameter_list RPAREN compound_statement");
+                    
+                     
+                     vector<SymbolInfo*>* sI = $1->get_child();
+                     for(SymbolInfo* info : *sI ){
+                       $$->set_child(info);
+                     }
+                     $$->set_child($2);
+                     $$->set_child($3);
+                     $$->set_child($4);
+
+                     $$->set_start($1->get_start());
+                     $$->set_end($4->get_end());
+                     
+                  }
+                | func_in RPAREN compound_statement                
+                  {  
+                     SymbolInfo *s = symTable->LookUp(($1->get_name()));
+                     s->set_param(parameter);
+                     parameter.clear(); 
+                     logout<<"func_definition : type_specifier ID LPAREN RPAREN compound_statement\n";     
+
+                     $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN RPAREN compound_statement");
+                    
+                     
+                     vector<SymbolInfo*>* sI = $1->get_child();
+                     for(SymbolInfo* info : *sI ){
+                       $$->set_child(info);
+                     }
+                     $$->set_child($2);
+                     $$->set_child($3);
+
+                     $$->set_start($1->get_start());
+                     $$->set_end($3->get_end());                                     
+                  }
                 ;
 
-                ;
+                
 parameter_list  : parameter_list COMMA type_specifier ID 
                     {
-                        para.push_back(SymbolInfo(($4->get_name()),*$3));
-                        logout<<"parameter_list  : parameter_list COMMA type_specifier ID\n";
+                        parameter.push_back(SymbolInfo(($4->get_type()),$3->get_returnType()));
+                        logout<<"parameter_list : parameter_list COMMA type_specifier ID\n";
+
+                        $$ = new SymbolInfo("parameter_list","parameter_list COMMA type_specifier ID");
+                        $$->set_child($1);
+                        $$->set_child($2);
+                        $$->set_child($3);
+                        $$->set_child($4);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($4->get_end());
                     }
                 | parameter_list COMMA type_specifier     
                     {
-                        logout<<"parameter_list  : parameter_list COMMA type_specifier\n";
+                        parameter.push_back(SymbolInfo("",$3->get_returnType()));
+                        logout<<"parameter_list : parameter_list COMMA type_specifier\n";
+
+                        $$ = new SymbolInfo("parameter_list","parameter_list COMMA type_specifier");
+                        $$->set_child($1);
+                        $$->set_child($2);
+                        $$->set_child($3);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($3->get_end());
                     }
                 | type_specifier ID                       
                     {
-                        para.push_back(SymbolInfo(($2->get_name()),*$1));
-                        logout << "parameter_list  : type_specifier ID\n" ;
+                        parameter.push_back(SymbolInfo(($2->get_type()),$1->get_returnType()));
+                        logout << "parameter_list : type_specifier ID\n" ;
+
+                        $$ = new SymbolInfo("parameter_list","type_specifier  ID");
+                        $$->set_child($1);
+                        $$->set_child($2);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($2->get_end());
+                        
                     }
                 | type_specifier                          
                     {   
-                        logout<<"parameter_list  : type_specifier\n";
+                        parameter.push_back(SymbolInfo("",$1->get_name()));
+                        logout<<"parameter_list : type_specifier\n";
+
+                        $$ = new SymbolInfo("parameter_list","type_specifier");
+                        $$->set_child($1);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($1->get_end());
                     }
                 ;
 
-LCURL_          : LCURL 
+LCURL_          :   LCURL 
                      {
                         symTable->EnterScope();
+                        for(auto i: parameter){
+
+                            int x = symTable->Insert(i.get_name(),i.get_type(),i.get_returnType(),logout);
+
+                            if(!x)errout<<"Line# "<<line_count<<" : Redefinition of parameter '"<<i.get_name()<<"'\n";
+                        }
+
+                        $$ = new SymbolInfo("","");
+            
+                        $$->set_child($1);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($1->get_end());
+
                      } 
 compound_statement : LCURL_
                      statements 
                      RCURL       
                      {
-                        for(auto i: para){
-
-                            symTable->Insert(i.get_name(),i.get_type(),i.get_returnType(),logout);
-                        }
-                        para.clear();
-
+                        
                         logout<<"compound_statement : LCURL statements RCURL\n";  
                         symTable->PrintAll(logout);
                         symTable->ExitScope();
+
+                        $$ = new SymbolInfo("compound_statement","LCURL statements RCURL");
+                        vector<SymbolInfo*>* sI = $1->get_child();
+
+                        for(SymbolInfo* info : *sI ){
+                            $$->set_child(info);
+                        }
+
+                        $$->set_child($2);
+                        $$->set_child($3);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($3->get_end());
                                                        
                      }
 
                     | LCURL_ RCURL                   
                      {
-                        for(auto i: para){
-
-                            symTable->Insert(i.get_name(),i.get_type(),i.get_returnType(),logout);
-                        }
-                        para.clear();
-
+                        
                         logout<<"compound_statement : LCURL RCURL\n";
                         symTable->PrintAll(logout);
                         symTable->ExitScope();
+
+                        $$ = new SymbolInfo("compound_statement","LCURL RCURL");
+
+                        vector<SymbolInfo*>* sI = $1->get_child();
+                        for(SymbolInfo* info : *sI ){
+                            $$->set_child(info);
+                        }
+
+                        $$->set_child($2);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($2->get_end());
                      }
                 ;
 
 var_declaration : type_specifier declaration_list SEMICOLON 
-                            {
-                                logout<<"var_declaration : type_specifier declaration_list SEMICOLON\n";
+                {
+                    logout<<"var_declaration : type_specifier declaration_list SEMICOLON\n";
+                    
+                   
+                    for(SymbolInfo info : declaredVar ){
+                        
+                        if($1->get_type()=="VOID"){
+                            errout<<"Line# "<<line_count<<": Variable or field '"<<info.get_name()<<"' declared void\n";
+                        }
+                        
+                         // info.set_type($1->get_returnType());
 
+                        info.set_returnType($1->get_returnType());
+
+                        
+                       
+                        int x = symTable->Insert(info.get_name(), info.get_type(),info.get_returnType(),logout);
+                        SymbolInfo *s = symTable->LookUpCurrent(info.get_name());
+
+                        if(s->get_type()=="ARRAY"){
+
+                            s->set_arraySize(info.get_arraySize());
+
+                        }
+                       
+
+                        if(!x){
                             
-                                for(SymbolInfo* info : *$2 ){
-                                    info->set_type(*$1);
-                                    symTable->Insert(info->get_name(), info->get_type(),info->get_returnType(),logout);
-                                    logout<<(info->get_name())<<" inserted\n";
-                                }
 
-                               
+                            if(info.get_type() != s->get_type() && info.get_returnType() != s->get_returnType() ){
+
+                                errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
                             }
+
+                            else if(info.get_returnType() != s->get_returnType()){
+                                errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
+                            }
+
+                            else{
+                                errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<(info.get_name())<<"'\n";
+                            }
+                        }
+                    }
+                    declaredVar.clear();
+
+                    $$ = new SymbolInfo("var_declaration","type_specifier declaration_list SEMICOLON");
+
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+
+                }
                 ;
-type_specifier  : INT       {logout<<"type_specifier : INT\n";$$=new string("INT");}
-                | FLOAT     {logout<<"type_specifier : FLOAT\n";$$=new string("FLOAT");}
-                | VOID      {logout<<"type_specifier : VOID\n";$$=new string("VOID");}
+type_specifier  : INT       
+                {
+                    logout<<"type_specifier : INT\n";
+
+                    $$  = new SymbolInfo("type_specifier ","INT");
+                    $$->set_returnType("INT");
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | FLOAT     
+                {
+                    logout<<"type_specifier    : FLOAT\n";
+                    $$  = new SymbolInfo("type_specifier","FLOAT");
+                    $$->set_returnType("FLOAT");
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | VOID      
+                {
+                    logout<<"type_specifier     : VOID\n";
+                    $$  = new SymbolInfo("type_specifier","VOID");
+                    $$->set_returnType("VOID");
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
                 ;
 
 declaration_list: declaration_list COMMA ID 
                         {
-                            logout<<"declaration_list: declaration_list COMMA ID\n";
-                           
-                            $1->push_back($3);
-                            $$ = $1;
+                            logout<<"declaration_list : declaration_list COMMA ID\n";
+                          
+                            declaredVar.push_back(SymbolInfo($3->get_type(),$3->get_name()));
+                            
+                            $$  = new SymbolInfo("declaration_list","declaration_list COMMA ID");
 
-                           // freeSymbolInfoVector($1);
-                             
+                            $$->set_child($1);
+                            $$->set_child($2);
+                            $$->set_child($3);
+                            $$->set_start($1->get_start());
+                            $$->set_end($3->get_end());
+
+                            
                         }
                 | declaration_list COMMA ID LSQUARE CONST_INT RSQUARE {
-                            logout<<"declaration_list: declaration_list COMMA ID LTHIRD CONST_INT RTHIRD\n";
+                            logout<<"declaration_list : declaration_list COMMA ID LTHIRD CONST_INT RTHIRD\n";
                             
-                            $3->set_returnType("ARRAY");
-                            $1->push_back($3);
-                            $$ = $1;
+                            SymbolInfo symInfo = SymbolInfo($3->get_type(),"ARRAY");
+
+                            symInfo.set_arraySize(stoi($5->get_type()));
+                            declaredVar.push_back(symInfo);
+
+
+                            $3->set_type("ARRAY");
+                            
+                           // declaredVar->push_back($3);
+
+                            $$  = new SymbolInfo("declaration_list","declaration_list COMMA ID LSQUARE CONST_INT RSQUARE");
+
+                            $$->set_child($1);
+                            $$->set_child($2);
+                            $$->set_child($3);
+                            $$->set_child($4);
+                            $$->set_child($5);
+                            $$->set_child($6);
+                            $$->set_start($1->get_start());
+                            $$->set_end($6->get_end());
+                            
                         }
 
                 | ID{
                             logout<<"declaration_list : ID "<<'\n';
 
-                            $$ = new vector<SymbolInfo*>();
-                            $$->push_back($1);
+                            //declaredVar = new vector<SymbolInfo*>();
+
+                            //declaredVar->push_back($1);
+                            declaredVar.push_back(SymbolInfo($1->get_type(),$1->get_name()));
+                            
+                            $$  = new SymbolInfo("declaration_list","ID");
+
+                            $$->set_child($1);
+                            
+                            
+                            $$->set_start($1->get_start());
+                            $$->set_end($1->get_end());
+
+                          
                     }
                 | ID LSQUARE  CONST_INT RSQUARE {
                             logout<<"declaration_list : ID LTHIRD CONST_INT RTHIRD\n";
-                            $$ = new vector<SymbolInfo*>();
-                            $1->set_returnType("Array");
-                            $$->push_back($1);
+
+                            
+                            SymbolInfo symInfo = SymbolInfo($1->get_type(),"ARRAY");
+                            symInfo.set_arraySize(stoi($3->get_type()));
+                            declaredVar.push_back(symInfo);
+                           // declaredVar = new vector<SymbolInfo*>();
+                           // declaredVar->push_back($1);
+
+                            $$  = new SymbolInfo("declaration_list","ID LSQUARE CONST_INT RSQUARE");
+
+                            $$->set_child($1);
+                            $$->set_child($2);
+                            $$->set_child($3);
+                            $$->set_child($4);
+                           
+                            $$->set_start($1->get_start());
+                            $$->set_end($4->get_end());
                             
                     }
                 ;
 
-statements      : statement             {
-                                            logout<<"statements : statement\n";
-
-                                        }
-                | statements statement  {logout<<"statements : statements statement\n";}
+statements      : statement             
+                  {
+                      logout<<"statements : statement\n";
+                      $$ = new SymbolInfo("statements","statement");
+                      $$->set_child($1);
+                      $$->set_start($1->get_start());
+                      $$->set_end($1->get_end());
+                  }
+                | statements statement
+                 {
+                      logout<<"statements : statements statement\n";
+                      $$ = new SymbolInfo("statements","statements statement");
+                      
+                      $$->set_child($1);
+                      $$->set_child($2);
+                      
+                      $$->set_start($1->get_start());
+                      $$->set_end($2->get_end());
+                  }
                 ;
 
-statement_if    : IF LPAREN expression RPAREN statement
-                |
-                ;
-statement       : var_declaration                                                                    {logout<<"statement : var_declaration\n";}
-                | expression_statement                                                               {logout<<"statement : expression_statement\n";}
-                | compound_statement                                                                 {logout<<"statement : compound_statement\n";}
-                | FOR LPAREN expression_statement expression_statement expression RPAREN statement   {logout<<"statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement \n";}
-                | IF LPAREN expression RPAREN statement                                              {logout<<"statement : IF LPAREN expression RPAREN statement\n";}
-                | IF LPAREN expression RPAREN statement ELSE statement                               {logout<<"statement : IF LPAREN expression RPAREN statement ELSE statement\n";}
-                | WHILE LPAREN expression RPAREN statement                                           {logout<<"statement : WHILE LPAREN expression RPAREN statement\n";}
-                | PRINTLN LPAREN ID RPAREN SEMICOLON                                                 {logout<<"statement : PRINTLN LPAREN ID RPAREN SEMICOLON\n";}
-                | RETURN expression SEMICOLON                                                        {logout<<"statement : RETURN expression SEMICOLON\n";}
+
+statement       : var_declaration                                                                    
+                  {
+                    logout<<"statement : var_declaration\n";
+
+                    $$ = new SymbolInfo("statement","var_declaration");
+                      
+                    $$->set_child($1);
+                      
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                  }
+                | expression_statement                                                               
+                  {
+                    logout<<"statement : expression_statement\n";
+                    $$ = new SymbolInfo("statement","expression_statement");
+                      
+                      $$->set_child($1);
+                      
+                      $$->set_start($1->get_start());
+                      $$->set_end($1->get_end());
+                  }
+                | compound_statement                                                                 
+                  {
+                    logout<<"statement : compound_statement\n";
+
+                    $$ = new SymbolInfo("statement","compound_statement");
+                      
+                    $$->set_child($1);
+                      
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                    
+                  }
+                | FOR LPAREN expression_statement expression_statement expression RPAREN statement   
+                  {
+                    logout<<"statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement \n";
+                    
+                    $$ = new SymbolInfo("statements","FOR LPAREN expression_statement expression_statement expression RPAREN statement");
+                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);
+                    $$->set_child($6);
+                    $$->set_child($7);
+                      
+                    $$->set_start($1->get_start());
+                    $$->set_end($7->get_end()); 
+                  }
+                | IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE                                         
+                  {
+                    logout<<"statement : IF LPAREN expression RPAREN statement\n";
+                    $$ = new SymbolInfo("statement","IF LPAREN expression RPAREN statement");
+                      
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);
+                      
+                    $$->set_start($1->get_start());
+                    $$->set_end($5->get_end());
+                  }
+                | IF LPAREN expression RPAREN statement ELSE statement                               
+                  { 
+                    logout<<"statement : IF LPAREN expression RPAREN statement ELSE statement\n";
+                    $$ = new SymbolInfo("statement","IF LPAREN expression RPAREN statement ELSE statement");
+
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);  
+                    $$->set_child($6);
+                    $$->set_child($7);
+                      
+                    $$->set_start($1->get_start());
+                    $$->set_end($7->get_end());
+                  }
+                | WHILE LPAREN expression RPAREN statement                                           
+                  { 
+                    logout<<"statement : WHILE LPAREN expression RPAREN statement\n";
+                    $$ = new SymbolInfo("statement","WHILE LPAREN expression RPAREN statement");
+                      
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);
+                      
+                    $$->set_start($1->get_start());
+                    $$->set_end($5->get_end());
+                  }
+                | PRINTLN LPAREN ID RPAREN SEMICOLON                                                 
+                  { 
+                    logout<<"statement : PRINTLN LPAREN ID RPAREN SEMICOLON\n";
+                    $$ = new SymbolInfo("statement","PRINTLN LPAREN ID RPAREN SEMICOLON");
+                      
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);
+                    
+                    $$->set_start($1->get_start());
+                    $$->set_end($5->get_end());
+                  }
+                | RETURN expression SEMICOLON                                                       
+                 {
+                    logout<<"statement : RETURN expression SEMICOLON\n";
+                    
+                    $$ = new SymbolInfo("statement","RETURN expression SEMICOLON");
+                      
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                 }
                 ;
 
-expression_statement: SEMICOLON             {logout<<"expression_statement: SEMICOLON\n";}
-                | expression SEMICOLON      {logout<<"expression_statement: expression SEMICOLON\n";}
-                ;
+expression_statement: SEMICOLON     
+                    {
+                        logout<<"expression_statement : SEMICOLON\n";
+                         $$ = new SymbolInfo("expression_statement","SEMICOLON");
+                      
+                        $$->set_child($1);
+                        
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($1->get_end());
+                    }
+                    | expression SEMICOLON      
+                    {
+                        logout<<"expression_statement : expression SEMICOLON\n";
+                        $$ = new SymbolInfo("expression_statement","expression SEMICOLON");
+                      
+                        $$->set_child($1);
+                        $$->set_child($2);
+
+                        $$->set_start($1->get_start());
+                        $$->set_end($2->get_end());
+                    }
+                    ;
+
 variable        : ID                            {
                                                     logout<<"variable : ID "<<'\n';
-                                                   
-                                                }
-                | ID LSQUARE expression RSQUARE {logout<<"variable : ID LTHIRD expression RTHIRD\n";}
-                ;
+                                                    UndeclaredVariable($1->get_type());
 
-expression      : logic_expression                     {logout<<"expression      : logic_expression \n";}
-                | variable ASSIGNOP logic_expression   {logout<<"expression      : variable ASSIGNOP logic_expression \n";}
-                ;
-
-logic_expression: rel_expression                        {logout<<"logic_expression: rel_expression\n";}
-                | rel_expression LOGICOP rel_expression {logout<<"logic_expression: rel_expression LOGICOP rel_expression\n";}
-                ;
-
-rel_expression  : simple_expression                          {logout<<"rel_expression  : simple_expression\n";}
-                | simple_expression RELOP simple_expression  {logout<<"rel_expression  : simple_expression RELOP simple_expression\n";}
-                ;
-simple_expression: term                         {logout<<"simple_expression: term\n";}
-                | simple_expression ADDOP term  {
-                                                    logout<<"simple_expression: simple_expression ADDOP term\n";
-                                                }
-                ;
-term            : unary_expression              {logout<<"term : unary_expression\n";}
-                | term MULOP unary_expression   {logout<<"term : term MULOP unary_expression\n";}
-                ;
-
-unary_expression: ADDOP unary_expression        {logout<<"unary_expression: ADDOP unary_expressionn\n";}
-                | NOT unary_expression          {logout<<"unary_expression: NOT unary_expression\n";}
-                | factor                        {logout<<"unary_expression: factor\n";}
-                ;
-
-factor          : variable                       {logout<<"factor : variable \n";}
-                | ID LPAREN argument_list RPAREN {
-                                                    logout<<"factor : ID LPAREN argument_list RPAREN \n";
-                                                    SymbolInfo *s = NULL;
-                                                    s = symTable->LookUp($1->get_name());  
+                                                    $$ = new SymbolInfo("variable","ID");
                                                     
-                                                    if(s==NULL){
-                                                        errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<($1->get_name())<< "\n";
-                                                    } 
-                                                 }
-                                                 
-                | LPAREN expression RPAREN       {logout<<"factor : LPAREN expression RPAREN \n";}
-                | CONST_INT                      {logout<<"factor : CONST_INT \n";}
-                | CONST_FLOAT                    {logout<<"factor : CONST_FLOAT \n";}
-                | variable INCOP                 {logout<<"factor : variable INCOP\n";}
-                | variable DECOP                 {logout<<"factor : variable DECOP\n";}
+                                                    $$->set_child($1);
+
+                                                    $$->set_start($1->get_start());
+                                                    $$->set_end($1->get_end());
+                                                
+                                                }
+
+                | ID LSQUARE expression RSQUARE {
+                                                    SymbolInfo *s = NULL;
+
+                                                    s = symTable->LookUp($1->get_type()); 
+                                                    
+                                                    if(s->get_type()!="ARRAY"){
+                                                        errout<<"Line# "<<line_count<<" : "<<($$->get_type())<<" is not a array\n";
+                                                    }
+                                                    
+                                                    logout<<"variable : ID LSQUARE expression RSQUARE\n";
+                                                    $$ = new SymbolInfo("variable","ID LSQUARE expression RSQUARE");
+                                                    
+                                                    $$->set_child($1);
+                                                    $$->set_child($2);
+                                                    $$->set_child($3);
+                                                    $$->set_child($4);
+
+                                                    $$->set_start($1->get_start());
+                                                    $$->set_end($4->get_end());
+                                                }
                 ;
 
-argument_list   : arguments {logout<<"argument_list : arguments\n";}
-                |
+expression      : logic_expression                     
+                 {
+                    logout<<"expression : logic_expression\n";
+                    $$ = new SymbolInfo("expression","logic_expression");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                  }
+                | variable ASSIGNOP logic_expression   
+                 {
+                    logout<<"expression : variable ASSIGNOP logic_expression\n";
+
+                    $$ = new SymbolInfo("expression","variable ASSIGNOP logic_expression");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                 }
                 ;
 
-arguments       : arguments COMMA logic_expression 
-                | logic_expression {logout<<"arguments  : logic_expression\n";}
+logic_expression: rel_expression                        
+                 {
+                    logout<<"logic_expression : rel_expression\n";
+                    $$ = new SymbolInfo("logic_expression","rel_expression");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                 }
+                | rel_expression LOGICOP rel_expression
+                 {
+                    logout<<"logic_expression : rel_expression LOGICOP rel_expression\n";
+
+                    $$ = new SymbolInfo("logic_expression" ,"rel_expression LOGICOP rel_expression");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                 }
+                ;
+
+rel_expression  : simple_expression                          
+                {
+                    logout<<"rel_expression : simple_expression\n";
+                    $$ = new SymbolInfo("rel_expression","simple_expression");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | simple_expression RELOP simple_expression  
+                {
+                    logout<<"rel_expression : simple_expression RELOP simple_expression\n";
+                    $$ = new SymbolInfo("rel_expression","simple_expression RELOP simple_expression");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                }
+                ;
+simple_expression: term                         
+                {
+                    logout<<"simple_expression : term\n";
+                    $$ = new SymbolInfo("simple_expression","term");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | simple_expression ADDOP term  
+                {
+                    logout<<"simple_expression : simple_expression ADDOP term\n";
+                    $$ = new SymbolInfo("simple_expression","simple_expression ADDOP term");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                }
+                ;
+
+term            : unary_expression              
+                {
+                    logout<<"term : unary_expression\n";
+                    $$ = new SymbolInfo("term","unary_expression");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | term MULOP unary_expression   
+                {
+                    logout<<"term : term MULOP unary_expression\n";
+                    $$ = new SymbolInfo("term","term MULOP unary_expression");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                }
+                ;
+
+unary_expression: ADDOP unary_expression        
+                {
+                    logout<<"unary_expression : ADDOP unary_expressionn\n";
+                    $$ = new SymbolInfo("unary_expression","ADDOP unary_expressionn");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($2->get_end());
+                }
+                | NOT unary_expression          
+                { 
+                    logout<<"unary_expression : NOT unary_expression\n";
+                    $$ = new SymbolInfo("unary_expression","NOT unary_expression");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($2->get_end());
+                }
+                | factor                        
+                { 
+                    logout<<"unary_expression : factor\n";
+                    $$ = new SymbolInfo("unary_expression","factor");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                ;
+
+factor          : variable              
+                {
+                   logout<<"factor : variable\n";     
+                   $$ = new SymbolInfo("factor" ,"variable ");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());           
+                }
+
+                | ID LPAREN argument_list RPAREN 
+                {
+                    logout<<"factor : ID LPAREN argument_list RPAREN \n";
+                    SymbolInfo *s = symTable->LookUp($1->get_type());  
+                                                    
+                    if(s==NULL){
+                        errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<($1->get_name())<< "\n";
+                    } 
+
+                    else if(parameterNum!=s->get_param().size()){
+                        if(parameterNum < s->get_param().size()){
+                            errout<<"Line# "<<line_count<<" : "<<"Too few arguments to function "<<($1->get_name())<< "\n";
+                        }
+                        else if(parameterNum > s->get_param().size()){
+                            errout<<"Line# "<<line_count<<" : "<<"Too many arguments to function "<<($1->get_name())<< "\n";
+                        }
+                    }
+                    parameterNum = 0;
+
+                    $$ = new SymbolInfo("factor","ID LPAREN argument_list RPAREN");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($4->get_end());
+                }
+
+                | LPAREN expression RPAREN       
+                {
+                    logout<<"factor : LPAREN expression RPAREN\n";
+                    $$ = new SymbolInfo("factor","LPAREN expression RPAREN");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                }
+                | CONST_INT                      
+                {
+                    logout<<"factor : CONST_INT \n";
+                    $$ = new SymbolInfo("factor","CONST_INT","INT");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | CONST_FLOAT                    
+                {
+                    logout<<"factor : CONST_FLOAT \n";
+                    $$ = new SymbolInfo("factor","CONST_FLOAT","FLOAT");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                | variable INCOP                 
+                {
+                    logout<<"factor : variable INCOP\n";
+                    $$ = new SymbolInfo("factor","variable INCOP");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($2->get_end());
+                }
+                | variable DECOP                 
+                {
+                    logout<<"factor : variable DECOP\n";
+                    $$ = new SymbolInfo("factor","variable DECOP");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($2->get_end());
+                }
+                ;
+
+argument_list   : arguments 
+                {
+                    logout<<"argument_list : arguments\n";
+                    $$ = new SymbolInfo("argument_list","arguments");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                }
+                |  { $$ = new SymbolInfo("argument_list ","",line_count);}
+                ;
+
+arguments       : arguments COMMA logic_expression
+                  {
+                    logout<<"arguments : arguments COMMA logic_expression\n";
+                    parameterNum++;
+
+                    $$ = new SymbolInfo("arguments","arguments COMMA logic_expression");
+                                                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($3->get_end());
+                  }
+                | logic_expression 
+                  { 
+                    parameterNum++; logout<<"arguments : logic_expression\n";
+
+                    $$ = new SymbolInfo("arguments","logic_expression");
+                                                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                  }
                 ;
 %%
 
@@ -278,6 +1049,7 @@ int main(int argc,char *argv[]){
 
 	logout.open("log.txt");
 	errout.open("error.txt");
+    parsetree.open("parse.txt");
 
 	yyin=fp;
 	yyparse();
@@ -289,5 +1061,6 @@ int main(int argc,char *argv[]){
 	fclose(yyin);
  	logout.close();
 	errout.close();
+    parsetree.close();
 	return 0;
 }

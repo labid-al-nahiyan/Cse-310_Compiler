@@ -1,1 +1,5 @@
-19 : Undeclared function var
+Line# 13 : Conflicting types for foo
+Line# 16 : 'z' redeclared as different kind of symbol 
+Line# 22 : Conflicting types for i
+Line# 24: Variable or field 'e' declared void
+Line# 25 : c is not a array

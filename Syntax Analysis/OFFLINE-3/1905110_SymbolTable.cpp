@@ -70,6 +70,26 @@ SymbolInfo* SymbolTable::LookUp(string name){
     //cout<<"\t'"<<name<<"' not found in any of the ScopeTables\n";
     return NULL ;
 }
+SymbolInfo* SymbolTable::LookUpCurrent(string name){
+    if(currentScope == NULL ){
+        //cout<<"\t'"<<name<<"' not found in any of the ScopeTables\n";
+        return NULL ;
+    }
+
+    ScopeTable *temp = currentScope;
+
+ //   while(temp!=NULL ){
+
+        SymbolInfo *temp1 = temp->LookUp(name);
+
+        if(temp1 != NULL )return temp1;
+
+    //    temp = temp->getParentScope();
+   // }
+
+    //cout<<"\t'"<<name<<"' not found in any of the ScopeTables\n";
+    return NULL ;
+}
 void SymbolTable::PrintCurrent(ofstream &logout){
     if(currentScope == NULL ){
        // cout<<"\tNothing for Print long\n";
@@ -92,5 +112,15 @@ void SymbolTable::PrintAll (ofstream &logout){
     }
 }
 SymbolTable::~SymbolTable(){
-    delete currentScope;
+   
+    // delete currentScope;
+
+    ScopeTable *temp = currentScope;
+    
+    while (temp != NULL)
+    {
+        currentScope = currentScope->getParentScope();
+        delete temp;
+        temp = currentScope;
+    }
 }
