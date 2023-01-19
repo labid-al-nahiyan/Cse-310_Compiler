@@ -28,13 +28,7 @@ int yylex(void);
 void yyerror( string s){
 	//printf("%s\n",s);
 }
-void UndeclaredVariable(string name){
-    SymbolInfo *s = NULL;
-    s = symTable->LookUp(name);  
-    if(s==NULL){
-        errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<name<< "\n";
-    } 
-}
+
 
 void freeVector(vector<SymbolInfo*>*symInfo){
     for(SymbolInfo* info: *symInfo){
@@ -49,6 +43,65 @@ void destroyChild(SymbolInfo* parent){
         delete info;
     }
     delete parent->get_child();
+}
+
+string assignTypeCast(SymbolInfo *s1, SymbolInfo* s2){
+    string a = s1->get_returnType();
+    string b = s2->get_returnType();
+    string c;
+
+    if(a=="VOID" || b =="VOID"){
+        if(a=="VOID" && b=="VOID"){
+            c = "VOID";
+        }
+        else {
+            c = (a=="VOID")?b:a;
+        }
+        errout<<"Line# "<<line_count<<" :Void cannot be used in expression\n";
+    }
+    else if(a==b){
+        c = a;
+        
+    }
+    else if(a=="FLOAT" && b == "INT"){
+        c = "FLOAT";
+    }
+    else if(a=="INT" && b=="FLOAT"){
+        c = "INT";
+        errout<<"Line# "<<line_count<<" :Warning: possible loss of data in assignment of FLOAT to INT" ;
+    }
+
+    return c;
+}
+
+string operationalTypeCast(SymbolInfo *s1, SymbolInfo* s2){
+    string a = s1->get_returnType();
+    string b = s2->get_returnType();
+    string c;
+    
+    if(a=="VOID" || b =="VOID"){
+        
+        if(a=="VOID" && b=="VOID"){
+            c = "VOID";
+        }
+
+        else {
+
+            c = (a=="VOID")?b:a;
+        }
+        
+        errout<<"Line# "<<line_count<<" :Void cannot be used in expression\n";
+    }
+    else if(a=="INT" && b == "INT"){
+        c = a;
+    }
+    else if(a=="FLOAT" && b == "INT"){
+        c = "FLOAT";
+    }
+    else if(a=="INT" && b=="FLOAT"){
+        c = "FLOAT";
+    }
+    return c;
 }
 
 %}
@@ -712,45 +765,55 @@ expression_statement: SEMICOLON
                     }
                     ;
 
-variable        : ID                            {
-                                                    logout<<"variable : ID "<<'\n';
-                                                    UndeclaredVariable($1->get_type());
+variable        : ID                            
+                {
+                    logout<<"variable : ID "<<'\n';
 
-                                                    $$ = new SymbolInfo("variable","ID");
-                                                    
-                                                    $$->set_child($1);
+                    SymbolInfo *s = NULL;
+                    s = symTable->LookUp($1->get_type());  
+                    if(s==NULL){
+                        errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<($1->get_type())<< "\n";
+                    } 
 
-                                                    $$->set_start($1->get_start());
-                                                    $$->set_end($1->get_end());
+                    $$ = new SymbolInfo("variable","ID", s->get_returnType());
+                    
+                    $$->set_child($1);
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
                                                 
-                                                }
+                }
 
-                | ID LSQUARE expression RSQUARE {
-                                                    SymbolInfo *s = NULL;
+                | ID LSQUARE expression RSQUARE 
+                {
+                    SymbolInfo *s = NULL;
 
-                                                    s = symTable->LookUp($1->get_type()); 
-                                                    
-                                                    if(s->get_type()!="ARRAY"){
-                                                        errout<<"Line# "<<line_count<<" : "<<($$->get_type())<<" is not a array\n";
-                                                    }
-                                                    
-                                                    logout<<"variable : ID LSQUARE expression RSQUARE\n";
-                                                    $$ = new SymbolInfo("variable","ID LSQUARE expression RSQUARE");
-                                                    
-                                                    $$->set_child($1);
-                                                    $$->set_child($2);
-                                                    $$->set_child($3);
-                                                    $$->set_child($4);
+                    s = symTable->LookUp($1->get_type()); 
+                    
+                    if(s->get_type()!="ARRAY"){
+                        errout<<"Line# "<<line_count<<" : "<<($1->get_type())<<" is not a array\n";
+                    }
+                    else if($3->get_returnType()!="INT"){
+                        errout<<"Line# "<<line_count<<" : "<<" Array subscript is not an integer\n";
+                    }
+                    
+                    logout<<"variable : ID LSQUARE expression RSQUARE\n";
+                    $$ = new SymbolInfo("variable","ID LSQUARE expression RSQUARE",s->get_returnType());
+                    
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
 
-                                                    $$->set_start($1->get_start());
-                                                    $$->set_end($4->get_end());
-                                                }
+                    $$->set_start($1->get_start());
+                    $$->set_end($4->get_end());
+                }
                 ;
 
 expression      : logic_expression                     
                  {
                     logout<<"expression : logic_expression\n";
-                    $$ = new SymbolInfo("expression","logic_expression");
+                    $$ = new SymbolInfo("expression","logic_expression",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -761,7 +824,11 @@ expression      : logic_expression
                  {
                     logout<<"expression : variable ASSIGNOP logic_expression\n";
 
-                    $$ = new SymbolInfo("expression","variable ASSIGNOP logic_expression");
+                    logout<<($1->get_returnType())<<" "<<($3->get_returnType())<<'\n';
+                    string c = assignTypeCast($1,$3);
+
+                    $$ = new SymbolInfo("expression","variable ASSIGNOP logic_expression",c);
+
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -769,13 +836,16 @@ expression      : logic_expression
 
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+
+                    
+                    
                  }
                 ;
 
 logic_expression: rel_expression                        
                  {
                     logout<<"logic_expression : rel_expression\n";
-                    $$ = new SymbolInfo("logic_expression","rel_expression");
+                    $$ = new SymbolInfo("logic_expression","rel_expression",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -785,8 +855,8 @@ logic_expression: rel_expression
                 | rel_expression LOGICOP rel_expression
                  {
                     logout<<"logic_expression : rel_expression LOGICOP rel_expression\n";
-
-                    $$ = new SymbolInfo("logic_expression" ,"rel_expression LOGICOP rel_expression");
+                    
+                    $$ = new SymbolInfo("logic_expression" ,"rel_expression LOGICOP rel_expression","INT");
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -800,7 +870,7 @@ logic_expression: rel_expression
 rel_expression  : simple_expression                          
                 {
                     logout<<"rel_expression : simple_expression\n";
-                    $$ = new SymbolInfo("rel_expression","simple_expression");
+                    $$ = new SymbolInfo("rel_expression","simple_expression",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -810,7 +880,8 @@ rel_expression  : simple_expression
                 | simple_expression RELOP simple_expression  
                 {
                     logout<<"rel_expression : simple_expression RELOP simple_expression\n";
-                    $$ = new SymbolInfo("rel_expression","simple_expression RELOP simple_expression");
+
+                    $$ = new SymbolInfo("rel_expression","simple_expression RELOP simple_expression","INT");
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -823,7 +894,7 @@ rel_expression  : simple_expression
 simple_expression: term                         
                 {
                     logout<<"simple_expression : term\n";
-                    $$ = new SymbolInfo("simple_expression","term");
+                    $$ = new SymbolInfo("simple_expression","term",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -833,7 +904,10 @@ simple_expression: term
                 | simple_expression ADDOP term  
                 {
                     logout<<"simple_expression : simple_expression ADDOP term\n";
-                    $$ = new SymbolInfo("simple_expression","simple_expression ADDOP term");
+
+                    string c = operationalTypeCast($1,$3);
+                    
+                    $$ = new SymbolInfo("simple_expression","simple_expression ADDOP term",c);
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -847,7 +921,7 @@ simple_expression: term
 term            : unary_expression              
                 {
                     logout<<"term : unary_expression\n";
-                    $$ = new SymbolInfo("term","unary_expression");
+                    $$ = new SymbolInfo("term","unary_expression",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -857,7 +931,16 @@ term            : unary_expression
                 | term MULOP unary_expression   
                 {
                     logout<<"term : term MULOP unary_expression\n";
-                    $$ = new SymbolInfo("term","term MULOP unary_expression");
+
+                    string c = operationalTypeCast($1,$3);
+
+                    if($2->get_type()=="%"){
+                       $$ = new SymbolInfo("term","term MULOP unary_expression",$1->get_returnType());
+
+                       if($3->get_returnType()!="INT") errout<<"Line# "<<line_count<<" :Operands of modulus must be integers\n";
+                    }   
+
+                    else $$ = new SymbolInfo("term","term MULOP unary_expression",c);
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -871,7 +954,7 @@ term            : unary_expression
 unary_expression: ADDOP unary_expression        
                 {
                     logout<<"unary_expression : ADDOP unary_expressionn\n";
-                    $$ = new SymbolInfo("unary_expression","ADDOP unary_expressionn");
+                    $$ = new SymbolInfo("unary_expression","ADDOP unary_expressionn",$2->get_returnType());
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -882,7 +965,7 @@ unary_expression: ADDOP unary_expression
                 | NOT unary_expression          
                 { 
                     logout<<"unary_expression : NOT unary_expression\n";
-                    $$ = new SymbolInfo("unary_expression","NOT unary_expression");
+                    $$ = new SymbolInfo("unary_expression","NOT unary_expression",$2->get_returnType());
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -893,7 +976,7 @@ unary_expression: ADDOP unary_expression
                 | factor                        
                 { 
                     logout<<"unary_expression : factor\n";
-                    $$ = new SymbolInfo("unary_expression","factor");
+                    $$ = new SymbolInfo("unary_expression","factor",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -905,7 +988,8 @@ unary_expression: ADDOP unary_expression
 factor          : variable              
                 {
                    logout<<"factor : variable\n";     
-                   $$ = new SymbolInfo("factor" ,"variable ");
+                   $$ = new SymbolInfo("factor" ,"variable ",$1->get_returnType());
+                   logout<<($1->get_returnType())<<'\n';
                                                     
                     $$->set_child($1);
 
@@ -917,12 +1001,15 @@ factor          : variable
                 {
                     logout<<"factor : ID LPAREN argument_list RPAREN \n";
                     SymbolInfo *s = symTable->LookUp($1->get_type());  
+
+                    string c;
                                                     
                     if(s==NULL){
-                        errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<($1->get_name())<< "\n";
+                        errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<($1->get_type())<< "\n";
                     } 
-
+                    
                     else if(parameterNum!=s->get_param().size()){
+                        c = s->get_returnType();
                         if(parameterNum < s->get_param().size()){
                             errout<<"Line# "<<line_count<<" : "<<"Too few arguments to function "<<($1->get_name())<< "\n";
                         }
@@ -930,10 +1017,13 @@ factor          : variable
                             errout<<"Line# "<<line_count<<" : "<<"Too many arguments to function "<<($1->get_name())<< "\n";
                         }
                     }
+                    else{
+                        c = s->get_returnType();
+                    }
                     parameterNum = 0;
 
-                    $$ = new SymbolInfo("factor","ID LPAREN argument_list RPAREN");
-                                                    
+                    $$ = new SymbolInfo("factor","ID LPAREN argument_list RPAREN",c);
+
                     $$->set_child($1);
                     $$->set_child($2);
                     $$->set_child($3);
@@ -946,7 +1036,7 @@ factor          : variable
                 | LPAREN expression RPAREN       
                 {
                     logout<<"factor : LPAREN expression RPAREN\n";
-                    $$ = new SymbolInfo("factor","LPAREN expression RPAREN");
+                    $$ = new SymbolInfo("factor","LPAREN expression RPAREN",$2->get_returnType());
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -978,7 +1068,7 @@ factor          : variable
                 | variable INCOP                 
                 {
                     logout<<"factor : variable INCOP\n";
-                    $$ = new SymbolInfo("factor","variable INCOP");
+                    $$ = new SymbolInfo("factor","variable INCOP",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -988,7 +1078,7 @@ factor          : variable
                 | variable DECOP                 
                 {
                     logout<<"factor : variable DECOP\n";
-                    $$ = new SymbolInfo("factor","variable DECOP");
+                    $$ = new SymbolInfo("factor","variable DECOP",$1->get_returnType());
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -1029,7 +1119,7 @@ arguments       : arguments COMMA logic_expression
                   { 
                     parameterNum++; logout<<"arguments : logic_expression\n";
 
-                    $$ = new SymbolInfo("arguments","logic_expression");
+                    $$ = new SymbolInfo("arguments","logic_expression",$1->get_returnType());
                                                     
                     $$->set_child($1);
 
@@ -1060,6 +1150,7 @@ int main(int argc,char *argv[]){
 
 	fclose(yyin);
  	logout.close();
+    
 	errout.close();
     parsetree.close();
 	return 0;

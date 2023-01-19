@@ -98,13 +98,7 @@ int yylex(void);
 void yyerror( string s){
 	//printf("%s\n",s);
 }
-void UndeclaredVariable(string name){
-    SymbolInfo *s = NULL;
-    s = symTable->LookUp(name);  
-    if(s==NULL){
-        errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<name<< "\n";
-    } 
-}
+
 
 void freeVector(vector<SymbolInfo*>*symInfo){
     for(SymbolInfo* info: *symInfo){
@@ -121,8 +115,67 @@ void destroyChild(SymbolInfo* parent){
     delete parent->get_child();
 }
 
+string assignTypeCast(SymbolInfo *s1, SymbolInfo* s2){
+    string a = s1->get_returnType();
+    string b = s2->get_returnType();
+    string c;
 
-#line 126 "y.tab.c"
+    if(a=="VOID" || b =="VOID"){
+        if(a=="VOID" && b=="VOID"){
+            c = "VOID";
+        }
+        else {
+            c = (a=="VOID")?b:a;
+        }
+        errout<<"Line# "<<line_count<<" :Void cannot be used in expression\n";
+    }
+    else if(a==b){
+        c = a;
+        
+    }
+    else if(a=="FLOAT" && b == "INT"){
+        c = "FLOAT";
+    }
+    else if(a=="INT" && b=="FLOAT"){
+        c = "INT";
+        errout<<"Line# "<<line_count<<" :Warning: possible loss of data in assignment of FLOAT to INT" ;
+    }
+
+    return c;
+}
+
+string operationalTypeCast(SymbolInfo *s1, SymbolInfo* s2){
+    string a = s1->get_returnType();
+    string b = s2->get_returnType();
+    string c;
+    
+    if(a=="VOID" || b =="VOID"){
+        
+        if(a=="VOID" && b=="VOID"){
+            c = "VOID";
+        }
+
+        else {
+
+            c = (a=="VOID")?b:a;
+        }
+        
+        errout<<"Line# "<<line_count<<" :Void cannot be used in expression\n";
+    }
+    else if(a=="INT" && b == "INT"){
+        c = a;
+    }
+    else if(a=="FLOAT" && b == "INT"){
+        c = "FLOAT";
+    }
+    else if(a=="INT" && b=="FLOAT"){
+        c = "FLOAT";
+    }
+    return c;
+}
+
+
+#line 179 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -257,12 +310,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 56 "1905110_parser.y"
+#line 109 "1905110_parser.y"
 
     SymbolInfo *symInfo;
     
 
-#line 266 "y.tab.c"
+#line 319 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -739,13 +792,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    70,    70,    83,    94,   103,   111,   119,   130,   163,
-     186,   212,   234,   257,   271,   284,   297,   310,   328,   352,
-     373,   430,   441,   451,   463,   479,   505,   523,   546,   554,
-     568,   579,   589,   601,   618,   632,   648,   662,   676,   691,
-     702,   715,   728,   750,   760,   775,   785,   800,   810,   823,
-     833,   847,   857,   871,   882,   893,   905,   916,   946,   958,
-     968,   978,   988,  1001,  1011,  1014,  1028
+       0,   123,   123,   136,   147,   156,   164,   172,   183,   216,
+     239,   265,   287,   310,   324,   337,   350,   363,   381,   405,
+     426,   483,   494,   504,   516,   532,   558,   576,   599,   607,
+     621,   632,   642,   654,   671,   685,   701,   715,   729,   744,
+     755,   768,   787,   813,   823,   845,   855,   870,   880,   894,
+     904,   921,   931,   954,   965,   976,   988,  1000,  1036,  1048,
+    1058,  1068,  1078,  1091,  1101,  1104,  1118
 };
 #endif
 
@@ -1397,7 +1450,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* start: program  */
-#line 71 "1905110_parser.y"
+#line 124 "1905110_parser.y"
        {
          logout<<"start : program\n";
           (yyval.symInfo) = new SymbolInfo("start","program");
@@ -1409,11 +1462,11 @@ yyreduce:
           
           destroyChild((yyval.symInfo));
        }
-#line 1413 "y.tab.c"
+#line 1466 "y.tab.c"
     break;
 
   case 3: /* program: program unit  */
-#line 84 "1905110_parser.y"
+#line 137 "1905110_parser.y"
         {
             logout<<"program : program unit\n";
             (yyval.symInfo) = new SymbolInfo("program","program unit");
@@ -1424,11 +1477,11 @@ yyreduce:
             (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
         }
-#line 1428 "y.tab.c"
+#line 1481 "y.tab.c"
     break;
 
   case 4: /* program: unit  */
-#line 95 "1905110_parser.y"
+#line 148 "1905110_parser.y"
         {
             logout<<"program : unit\n";
             (yyval.symInfo) = new SymbolInfo("program","unit");
@@ -1436,11 +1489,11 @@ yyreduce:
             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
             (yyval.symInfo)->set_child((yyvsp[0].symInfo));
         }
-#line 1440 "y.tab.c"
+#line 1493 "y.tab.c"
     break;
 
   case 5: /* unit: var_declaration  */
-#line 104 "1905110_parser.y"
+#line 157 "1905110_parser.y"
         {
             logout<<"unit : var_declaration\n";
             (yyval.symInfo) = new SymbolInfo("unit","var_declaration");
@@ -1448,11 +1501,11 @@ yyreduce:
             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
             (yyval.symInfo)->set_child((yyvsp[0].symInfo));
         }
-#line 1452 "y.tab.c"
+#line 1505 "y.tab.c"
     break;
 
   case 6: /* unit: func_declaration  */
-#line 112 "1905110_parser.y"
+#line 165 "1905110_parser.y"
         {
             logout<<"unit : func_declaration\n";
             (yyval.symInfo) = new SymbolInfo("unit","func_declaration");
@@ -1460,11 +1513,11 @@ yyreduce:
             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
             (yyval.symInfo)->set_child((yyvsp[0].symInfo));
         }
-#line 1464 "y.tab.c"
+#line 1517 "y.tab.c"
     break;
 
   case 7: /* unit: func_definition  */
-#line 120 "1905110_parser.y"
+#line 173 "1905110_parser.y"
         {
             logout<<"unit : func_definition\n";
             (yyval.symInfo) = new SymbolInfo("unit","func_definition");
@@ -1472,11 +1525,11 @@ yyreduce:
             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
             (yyval.symInfo)->set_child((yyvsp[0].symInfo));
         }
-#line 1476 "y.tab.c"
+#line 1529 "y.tab.c"
     break;
 
   case 8: /* func_in: type_specifier ID LPAREN  */
-#line 131 "1905110_parser.y"
+#line 184 "1905110_parser.y"
           {
             int x = symTable->Insert(((yyvsp[-1].symInfo)->get_type()),"FUNCTION",(yyvsp[-2].symInfo)->get_returnType(),logout);
 
@@ -1507,11 +1560,11 @@ yyreduce:
             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
 
           }
-#line 1511 "y.tab.c"
+#line 1564 "y.tab.c"
     break;
 
   case 9: /* func_declaration: func_in parameter_list RPAREN SEMICOLON  */
-#line 164 "1905110_parser.y"
+#line 217 "1905110_parser.y"
                 {
                     logout<<"func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON\n";
                     SymbolInfo *s = symTable->LookUp(((yyvsp[-3].symInfo)->get_name()));
@@ -1534,11 +1587,11 @@ yyreduce:
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
 
                 }
-#line 1538 "y.tab.c"
+#line 1591 "y.tab.c"
     break;
 
   case 10: /* func_declaration: func_in RPAREN SEMICOLON  */
-#line 187 "1905110_parser.y"
+#line 240 "1905110_parser.y"
                 {
                     logout<<"func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON\n";
                     SymbolInfo *s = symTable->LookUp(((yyvsp[-2].symInfo)->get_name()));
@@ -1563,11 +1616,11 @@ yyreduce:
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
 
                 }
-#line 1567 "y.tab.c"
+#line 1620 "y.tab.c"
     break;
 
   case 11: /* func_definition: func_in parameter_list RPAREN compound_statement  */
-#line 213 "1905110_parser.y"
+#line 266 "1905110_parser.y"
                   {
                      SymbolInfo *s = symTable->LookUp(((yyvsp[-3].symInfo)->get_name()));
                      s->set_param(parameter);
@@ -1589,11 +1642,11 @@ yyreduce:
                      (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                      
                   }
-#line 1593 "y.tab.c"
+#line 1646 "y.tab.c"
     break;
 
   case 12: /* func_definition: func_in RPAREN compound_statement  */
-#line 235 "1905110_parser.y"
+#line 288 "1905110_parser.y"
                   {  
                      SymbolInfo *s = symTable->LookUp(((yyvsp[-2].symInfo)->get_name()));
                      s->set_param(parameter);
@@ -1613,11 +1666,11 @@ yyreduce:
                      (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
                      (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());                                     
                   }
-#line 1617 "y.tab.c"
+#line 1670 "y.tab.c"
     break;
 
   case 13: /* parameter_list: parameter_list COMMA type_specifier ID  */
-#line 258 "1905110_parser.y"
+#line 311 "1905110_parser.y"
                     {
                         parameter.push_back(SymbolInfo(((yyvsp[0].symInfo)->get_type()),(yyvsp[-1].symInfo)->get_returnType()));
                         logout<<"parameter_list : parameter_list COMMA type_specifier ID\n";
@@ -1631,11 +1684,11 @@ yyreduce:
                         (yyval.symInfo)->set_start((yyvsp[-3].symInfo)->get_start());
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                     }
-#line 1635 "y.tab.c"
+#line 1688 "y.tab.c"
     break;
 
   case 14: /* parameter_list: parameter_list COMMA type_specifier  */
-#line 272 "1905110_parser.y"
+#line 325 "1905110_parser.y"
                     {
                         parameter.push_back(SymbolInfo("",(yyvsp[0].symInfo)->get_returnType()));
                         logout<<"parameter_list : parameter_list COMMA type_specifier\n";
@@ -1648,11 +1701,11 @@ yyreduce:
                         (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                     }
-#line 1652 "y.tab.c"
+#line 1705 "y.tab.c"
     break;
 
   case 15: /* parameter_list: type_specifier ID  */
-#line 285 "1905110_parser.y"
+#line 338 "1905110_parser.y"
                     {
                         parameter.push_back(SymbolInfo(((yyvsp[0].symInfo)->get_type()),(yyvsp[-1].symInfo)->get_returnType()));
                         logout << "parameter_list : type_specifier ID\n" ;
@@ -1665,11 +1718,11 @@ yyreduce:
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                         
                     }
-#line 1669 "y.tab.c"
+#line 1722 "y.tab.c"
     break;
 
   case 16: /* parameter_list: type_specifier  */
-#line 298 "1905110_parser.y"
+#line 351 "1905110_parser.y"
                     {   
                         parameter.push_back(SymbolInfo("",(yyvsp[0].symInfo)->get_name()));
                         logout<<"parameter_list : type_specifier\n";
@@ -1680,11 +1733,11 @@ yyreduce:
                         (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                     }
-#line 1684 "y.tab.c"
+#line 1737 "y.tab.c"
     break;
 
   case 17: /* LCURL_: LCURL  */
-#line 311 "1905110_parser.y"
+#line 364 "1905110_parser.y"
                      {
                         symTable->EnterScope();
                         for(auto i: parameter){
@@ -1702,11 +1755,11 @@ yyreduce:
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
 
                      }
-#line 1706 "y.tab.c"
+#line 1759 "y.tab.c"
     break;
 
   case 18: /* compound_statement: LCURL_ statements RCURL  */
-#line 331 "1905110_parser.y"
+#line 384 "1905110_parser.y"
                      {
                         
                         logout<<"compound_statement : LCURL statements RCURL\n";  
@@ -1727,11 +1780,11 @@ yyreduce:
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                                                        
                      }
-#line 1731 "y.tab.c"
+#line 1784 "y.tab.c"
     break;
 
   case 19: /* compound_statement: LCURL_ RCURL  */
-#line 353 "1905110_parser.y"
+#line 406 "1905110_parser.y"
                      {
                         
                         logout<<"compound_statement : LCURL RCURL\n";
@@ -1750,11 +1803,11 @@ yyreduce:
                         (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                      }
-#line 1754 "y.tab.c"
+#line 1807 "y.tab.c"
     break;
 
   case 20: /* var_declaration: type_specifier declaration_list SEMICOLON  */
-#line 374 "1905110_parser.y"
+#line 427 "1905110_parser.y"
                 {
                     logout<<"var_declaration : type_specifier declaration_list SEMICOLON\n";
                     
@@ -1810,11 +1863,11 @@ yyreduce:
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
 
                 }
-#line 1814 "y.tab.c"
+#line 1867 "y.tab.c"
     break;
 
   case 21: /* type_specifier: INT  */
-#line 431 "1905110_parser.y"
+#line 484 "1905110_parser.y"
                 {
                     logout<<"type_specifier : INT\n";
 
@@ -1825,11 +1878,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 1829 "y.tab.c"
+#line 1882 "y.tab.c"
     break;
 
   case 22: /* type_specifier: FLOAT  */
-#line 442 "1905110_parser.y"
+#line 495 "1905110_parser.y"
                 {
                     logout<<"type_specifier    : FLOAT\n";
                     (yyval.symInfo)  = new SymbolInfo("type_specifier","FLOAT");
@@ -1839,11 +1892,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 1843 "y.tab.c"
+#line 1896 "y.tab.c"
     break;
 
   case 23: /* type_specifier: VOID  */
-#line 452 "1905110_parser.y"
+#line 505 "1905110_parser.y"
                 {
                     logout<<"type_specifier     : VOID\n";
                     (yyval.symInfo)  = new SymbolInfo("type_specifier","VOID");
@@ -1853,11 +1906,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 1857 "y.tab.c"
+#line 1910 "y.tab.c"
     break;
 
   case 24: /* declaration_list: declaration_list COMMA ID  */
-#line 464 "1905110_parser.y"
+#line 517 "1905110_parser.y"
                         {
                             logout<<"declaration_list : declaration_list COMMA ID\n";
                           
@@ -1873,11 +1926,11 @@ yyreduce:
 
                             
                         }
-#line 1877 "y.tab.c"
+#line 1930 "y.tab.c"
     break;
 
   case 25: /* declaration_list: declaration_list COMMA ID LSQUARE CONST_INT RSQUARE  */
-#line 479 "1905110_parser.y"
+#line 532 "1905110_parser.y"
                                                                       {
                             logout<<"declaration_list : declaration_list COMMA ID LTHIRD CONST_INT RTHIRD\n";
                             
@@ -1903,11 +1956,11 @@ yyreduce:
                             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                             
                         }
-#line 1907 "y.tab.c"
+#line 1960 "y.tab.c"
     break;
 
   case 26: /* declaration_list: ID  */
-#line 505 "1905110_parser.y"
+#line 558 "1905110_parser.y"
                     {
                             logout<<"declaration_list : ID "<<'\n';
 
@@ -1926,11 +1979,11 @@ yyreduce:
 
                           
                     }
-#line 1930 "y.tab.c"
+#line 1983 "y.tab.c"
     break;
 
   case 27: /* declaration_list: ID LSQUARE CONST_INT RSQUARE  */
-#line 523 "1905110_parser.y"
+#line 576 "1905110_parser.y"
                                                 {
                             logout<<"declaration_list : ID LTHIRD CONST_INT RTHIRD\n";
 
@@ -1952,11 +2005,11 @@ yyreduce:
                             (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                             
                     }
-#line 1956 "y.tab.c"
+#line 2009 "y.tab.c"
     break;
 
   case 28: /* statements: statement  */
-#line 547 "1905110_parser.y"
+#line 600 "1905110_parser.y"
                   {
                       logout<<"statements : statement\n";
                       (yyval.symInfo) = new SymbolInfo("statements","statement");
@@ -1964,11 +2017,11 @@ yyreduce:
                       (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                       (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 1968 "y.tab.c"
+#line 2021 "y.tab.c"
     break;
 
   case 29: /* statements: statements statement  */
-#line 555 "1905110_parser.y"
+#line 608 "1905110_parser.y"
                  {
                       logout<<"statements : statements statement\n";
                       (yyval.symInfo) = new SymbolInfo("statements","statements statement");
@@ -1979,11 +2032,11 @@ yyreduce:
                       (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
                       (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 1983 "y.tab.c"
+#line 2036 "y.tab.c"
     break;
 
   case 30: /* statement: var_declaration  */
-#line 569 "1905110_parser.y"
+#line 622 "1905110_parser.y"
                   {
                     logout<<"statement : var_declaration\n";
 
@@ -1994,11 +2047,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 1998 "y.tab.c"
+#line 2051 "y.tab.c"
     break;
 
   case 31: /* statement: expression_statement  */
-#line 580 "1905110_parser.y"
+#line 633 "1905110_parser.y"
                   {
                     logout<<"statement : expression_statement\n";
                     (yyval.symInfo) = new SymbolInfo("statement","expression_statement");
@@ -2008,11 +2061,11 @@ yyreduce:
                       (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                       (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2012 "y.tab.c"
+#line 2065 "y.tab.c"
     break;
 
   case 32: /* statement: compound_statement  */
-#line 590 "1905110_parser.y"
+#line 643 "1905110_parser.y"
                   {
                     logout<<"statement : compound_statement\n";
 
@@ -2024,11 +2077,11 @@ yyreduce:
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                     
                   }
-#line 2028 "y.tab.c"
+#line 2081 "y.tab.c"
     break;
 
   case 33: /* statement: FOR LPAREN expression_statement expression_statement expression RPAREN statement  */
-#line 602 "1905110_parser.y"
+#line 655 "1905110_parser.y"
                   {
                     logout<<"statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement \n";
                     
@@ -2045,11 +2098,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-6].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end()); 
                   }
-#line 2049 "y.tab.c"
+#line 2102 "y.tab.c"
     break;
 
   case 34: /* statement: IF LPAREN expression RPAREN statement  */
-#line 619 "1905110_parser.y"
+#line 672 "1905110_parser.y"
                   {
                     logout<<"statement : IF LPAREN expression RPAREN statement\n";
                     (yyval.symInfo) = new SymbolInfo("statement","IF LPAREN expression RPAREN statement");
@@ -2063,11 +2116,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-4].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2067 "y.tab.c"
+#line 2120 "y.tab.c"
     break;
 
   case 35: /* statement: IF LPAREN expression RPAREN statement ELSE statement  */
-#line 633 "1905110_parser.y"
+#line 686 "1905110_parser.y"
                   { 
                     logout<<"statement : IF LPAREN expression RPAREN statement ELSE statement\n";
                     (yyval.symInfo) = new SymbolInfo("statement","IF LPAREN expression RPAREN statement ELSE statement");
@@ -2083,11 +2136,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-6].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2087 "y.tab.c"
+#line 2140 "y.tab.c"
     break;
 
   case 36: /* statement: WHILE LPAREN expression RPAREN statement  */
-#line 649 "1905110_parser.y"
+#line 702 "1905110_parser.y"
                   { 
                     logout<<"statement : WHILE LPAREN expression RPAREN statement\n";
                     (yyval.symInfo) = new SymbolInfo("statement","WHILE LPAREN expression RPAREN statement");
@@ -2101,11 +2154,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-4].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2105 "y.tab.c"
+#line 2158 "y.tab.c"
     break;
 
   case 37: /* statement: PRINTLN LPAREN ID RPAREN SEMICOLON  */
-#line 663 "1905110_parser.y"
+#line 716 "1905110_parser.y"
                   { 
                     logout<<"statement : PRINTLN LPAREN ID RPAREN SEMICOLON\n";
                     (yyval.symInfo) = new SymbolInfo("statement","PRINTLN LPAREN ID RPAREN SEMICOLON");
@@ -2119,11 +2172,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-4].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2123 "y.tab.c"
+#line 2176 "y.tab.c"
     break;
 
   case 38: /* statement: RETURN expression SEMICOLON  */
-#line 677 "1905110_parser.y"
+#line 730 "1905110_parser.y"
                  {
                     logout<<"statement : RETURN expression SEMICOLON\n";
                     
@@ -2136,11 +2189,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                  }
-#line 2140 "y.tab.c"
+#line 2193 "y.tab.c"
     break;
 
   case 39: /* expression_statement: SEMICOLON  */
-#line 692 "1905110_parser.y"
+#line 745 "1905110_parser.y"
                     {
                         logout<<"expression_statement : SEMICOLON\n";
                          (yyval.symInfo) = new SymbolInfo("expression_statement","SEMICOLON");
@@ -2151,11 +2204,11 @@ yyreduce:
                         (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                     }
-#line 2155 "y.tab.c"
+#line 2208 "y.tab.c"
     break;
 
   case 40: /* expression_statement: expression SEMICOLON  */
-#line 703 "1905110_parser.y"
+#line 756 "1905110_parser.y"
                     {
                         logout<<"expression_statement : expression SEMICOLON\n";
                         (yyval.symInfo) = new SymbolInfo("expression_statement","expression SEMICOLON");
@@ -2166,283 +2219,48 @@ yyreduce:
                         (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
                         (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                     }
-#line 2170 "y.tab.c"
+#line 2223 "y.tab.c"
     break;
 
   case 41: /* variable: ID  */
-#line 715 "1905110_parser.y"
-                                                {
-                                                    logout<<"variable : ID "<<'\n';
-                                                    UndeclaredVariable((yyvsp[0].symInfo)->get_type());
+#line 769 "1905110_parser.y"
+                {
+                    logout<<"variable : ID "<<'\n';
 
-                                                    (yyval.symInfo) = new SymbolInfo("variable","ID");
-                                                    
-                                                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+                    SymbolInfo *s = NULL;
+                    s = symTable->LookUp((yyvsp[0].symInfo)->get_type());  
+                    if(s==NULL){
+                        errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<((yyvsp[0].symInfo)->get_type())<< "\n";
+                    } 
 
-                                                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                                                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                    (yyval.symInfo) = new SymbolInfo("variable","ID", s->get_returnType());
+                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                                                 
-                                                }
-#line 2187 "y.tab.c"
+                }
+#line 2245 "y.tab.c"
     break;
 
   case 42: /* variable: ID LSQUARE expression RSQUARE  */
-#line 728 "1905110_parser.y"
-                                                {
-                                                    SymbolInfo *s = NULL;
-
-                                                    s = symTable->LookUp((yyvsp[-3].symInfo)->get_type()); 
-                                                    
-                                                    if(s->get_type()!="ARRAY"){
-                                                        errout<<"Line# "<<line_count<<" : "<<((yyval.symInfo)->get_type())<<" is not a array\n";
-                                                    }
-                                                    
-                                                    logout<<"variable : ID LSQUARE expression RSQUARE\n";
-                                                    (yyval.symInfo) = new SymbolInfo("variable","ID LSQUARE expression RSQUARE");
-                                                    
-                                                    (yyval.symInfo)->set_child((yyvsp[-3].symInfo));
-                                                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
-                                                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                                                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                                                    (yyval.symInfo)->set_start((yyvsp[-3].symInfo)->get_start());
-                                                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                                                }
-#line 2212 "y.tab.c"
-    break;
-
-  case 43: /* expression: logic_expression  */
-#line 751 "1905110_parser.y"
-                 {
-                    logout<<"expression : logic_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("expression","logic_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                  }
-#line 2226 "y.tab.c"
-    break;
-
-  case 44: /* expression: variable ASSIGNOP logic_expression  */
-#line 761 "1905110_parser.y"
-                 {
-                    logout<<"expression : variable ASSIGNOP logic_expression\n";
-
-                    (yyval.symInfo) = new SymbolInfo("expression","variable ASSIGNOP logic_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                 }
-#line 2243 "y.tab.c"
-    break;
-
-  case 45: /* logic_expression: rel_expression  */
-#line 776 "1905110_parser.y"
-                 {
-                    logout<<"logic_expression : rel_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("logic_expression","rel_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                 }
-#line 2257 "y.tab.c"
-    break;
-
-  case 46: /* logic_expression: rel_expression LOGICOP rel_expression  */
-#line 786 "1905110_parser.y"
-                 {
-                    logout<<"logic_expression : rel_expression LOGICOP rel_expression\n";
-
-                    (yyval.symInfo) = new SymbolInfo("logic_expression" ,"rel_expression LOGICOP rel_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                 }
-#line 2274 "y.tab.c"
-    break;
-
-  case 47: /* rel_expression: simple_expression  */
-#line 801 "1905110_parser.y"
+#line 788 "1905110_parser.y"
                 {
-                    logout<<"rel_expression : simple_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("rel_expression","simple_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+                    SymbolInfo *s = NULL;
 
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2288 "y.tab.c"
-    break;
-
-  case 48: /* rel_expression: simple_expression RELOP simple_expression  */
-#line 811 "1905110_parser.y"
-                {
-                    logout<<"rel_expression : simple_expression RELOP simple_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("rel_expression","simple_expression RELOP simple_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2304 "y.tab.c"
-    break;
-
-  case 49: /* simple_expression: term  */
-#line 824 "1905110_parser.y"
-                {
-                    logout<<"simple_expression : term\n";
-                    (yyval.symInfo) = new SymbolInfo("simple_expression","term");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2318 "y.tab.c"
-    break;
-
-  case 50: /* simple_expression: simple_expression ADDOP term  */
-#line 834 "1905110_parser.y"
-                {
-                    logout<<"simple_expression : simple_expression ADDOP term\n";
-                    (yyval.symInfo) = new SymbolInfo("simple_expression","simple_expression ADDOP term");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2334 "y.tab.c"
-    break;
-
-  case 51: /* term: unary_expression  */
-#line 848 "1905110_parser.y"
-                {
-                    logout<<"term : unary_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("term","unary_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2348 "y.tab.c"
-    break;
-
-  case 52: /* term: term MULOP unary_expression  */
-#line 858 "1905110_parser.y"
-                {
-                    logout<<"term : term MULOP unary_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("term","term MULOP unary_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2364 "y.tab.c"
-    break;
-
-  case 53: /* unary_expression: ADDOP unary_expression  */
-#line 872 "1905110_parser.y"
-                {
-                    logout<<"unary_expression : ADDOP unary_expressionn\n";
-                    (yyval.symInfo) = new SymbolInfo("unary_expression","ADDOP unary_expressionn");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2379 "y.tab.c"
-    break;
-
-  case 54: /* unary_expression: NOT unary_expression  */
-#line 883 "1905110_parser.y"
-                { 
-                    logout<<"unary_expression : NOT unary_expression\n";
-                    (yyval.symInfo) = new SymbolInfo("unary_expression","NOT unary_expression");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2394 "y.tab.c"
-    break;
-
-  case 55: /* unary_expression: factor  */
-#line 894 "1905110_parser.y"
-                { 
-                    logout<<"unary_expression : factor\n";
-                    (yyval.symInfo) = new SymbolInfo("unary_expression","factor");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
-                }
-#line 2408 "y.tab.c"
-    break;
-
-  case 56: /* factor: variable  */
-#line 906 "1905110_parser.y"
-                {
-                   logout<<"factor : variable\n";     
-                   (yyval.symInfo) = new SymbolInfo("factor" ,"variable ");
-                                                    
-                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
-
-                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
-                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());           
-                }
-#line 2422 "y.tab.c"
-    break;
-
-  case 57: /* factor: ID LPAREN argument_list RPAREN  */
-#line 917 "1905110_parser.y"
-                {
-                    logout<<"factor : ID LPAREN argument_list RPAREN \n";
-                    SymbolInfo *s = symTable->LookUp((yyvsp[-3].symInfo)->get_type());  
-                                                    
-                    if(s==NULL){
-                        errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<((yyvsp[-3].symInfo)->get_name())<< "\n";
-                    } 
-
-                    else if(parameterNum!=s->get_param().size()){
-                        if(parameterNum < s->get_param().size()){
-                            errout<<"Line# "<<line_count<<" : "<<"Too few arguments to function "<<((yyvsp[-3].symInfo)->get_name())<< "\n";
-                        }
-                        else if(parameterNum > s->get_param().size()){
-                            errout<<"Line# "<<line_count<<" : "<<"Too many arguments to function "<<((yyvsp[-3].symInfo)->get_name())<< "\n";
-                        }
+                    s = symTable->LookUp((yyvsp[-3].symInfo)->get_type()); 
+                    
+                    if(s->get_type()!="ARRAY"){
+                        errout<<"Line# "<<line_count<<" : "<<((yyvsp[-3].symInfo)->get_type())<<" is not a array\n";
                     }
-                    parameterNum = 0;
-
-                    (yyval.symInfo) = new SymbolInfo("factor","ID LPAREN argument_list RPAREN");
-                                                    
+                    else if((yyvsp[-1].symInfo)->get_returnType()!="INT"){
+                        errout<<"Line# "<<line_count<<" : "<<" Array subscript is not an integer\n";
+                    }
+                    
+                    logout<<"variable : ID LSQUARE expression RSQUARE\n";
+                    (yyval.symInfo) = new SymbolInfo("variable","ID LSQUARE expression RSQUARE",s->get_returnType());
+                    
                     (yyval.symInfo)->set_child((yyvsp[-3].symInfo));
                     (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
                     (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
@@ -2451,14 +2269,98 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-3].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2455 "y.tab.c"
+#line 2273 "y.tab.c"
     break;
 
-  case 58: /* factor: LPAREN expression RPAREN  */
-#line 947 "1905110_parser.y"
+  case 43: /* expression: logic_expression  */
+#line 814 "1905110_parser.y"
+                 {
+                    logout<<"expression : logic_expression\n";
+                    (yyval.symInfo) = new SymbolInfo("expression","logic_expression",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                  }
+#line 2287 "y.tab.c"
+    break;
+
+  case 44: /* expression: variable ASSIGNOP logic_expression  */
+#line 824 "1905110_parser.y"
+                 {
+                    logout<<"expression : variable ASSIGNOP logic_expression\n";
+
+                    logout<<((yyvsp[-2].symInfo)->get_returnType())<<" "<<((yyvsp[0].symInfo)->get_returnType())<<'\n';
+                    string c = assignTypeCast((yyvsp[-2].symInfo),(yyvsp[0].symInfo));
+
+                    (yyval.symInfo) = new SymbolInfo("expression","variable ASSIGNOP logic_expression",c);
+
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+
+                    
+                    
+                 }
+#line 2311 "y.tab.c"
+    break;
+
+  case 45: /* logic_expression: rel_expression  */
+#line 846 "1905110_parser.y"
+                 {
+                    logout<<"logic_expression : rel_expression\n";
+                    (yyval.symInfo) = new SymbolInfo("logic_expression","rel_expression",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                 }
+#line 2325 "y.tab.c"
+    break;
+
+  case 46: /* logic_expression: rel_expression LOGICOP rel_expression  */
+#line 856 "1905110_parser.y"
+                 {
+                    logout<<"logic_expression : rel_expression LOGICOP rel_expression\n";
+                    
+                    (yyval.symInfo) = new SymbolInfo("logic_expression" ,"rel_expression LOGICOP rel_expression","INT");
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                 }
+#line 2342 "y.tab.c"
+    break;
+
+  case 47: /* rel_expression: simple_expression  */
+#line 871 "1905110_parser.y"
                 {
-                    logout<<"factor : LPAREN expression RPAREN\n";
-                    (yyval.symInfo) = new SymbolInfo("factor","LPAREN expression RPAREN");
+                    logout<<"rel_expression : simple_expression\n";
+                    (yyval.symInfo) = new SymbolInfo("rel_expression","simple_expression",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2356 "y.tab.c"
+    break;
+
+  case 48: /* rel_expression: simple_expression RELOP simple_expression  */
+#line 881 "1905110_parser.y"
+                {
+                    logout<<"rel_expression : simple_expression RELOP simple_expression\n";
+
+                    (yyval.symInfo) = new SymbolInfo("rel_expression","simple_expression RELOP simple_expression","INT");
                                                     
                     (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
                     (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
@@ -2467,56 +2369,242 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2471 "y.tab.c"
+#line 2373 "y.tab.c"
+    break;
+
+  case 49: /* simple_expression: term  */
+#line 895 "1905110_parser.y"
+                {
+                    logout<<"simple_expression : term\n";
+                    (yyval.symInfo) = new SymbolInfo("simple_expression","term",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2387 "y.tab.c"
+    break;
+
+  case 50: /* simple_expression: simple_expression ADDOP term  */
+#line 905 "1905110_parser.y"
+                {
+                    logout<<"simple_expression : simple_expression ADDOP term\n";
+
+                    string c = operationalTypeCast((yyvsp[-2].symInfo),(yyvsp[0].symInfo));
+                    
+                    (yyval.symInfo) = new SymbolInfo("simple_expression","simple_expression ADDOP term",c);
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2406 "y.tab.c"
+    break;
+
+  case 51: /* term: unary_expression  */
+#line 922 "1905110_parser.y"
+                {
+                    logout<<"term : unary_expression\n";
+                    (yyval.symInfo) = new SymbolInfo("term","unary_expression",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2420 "y.tab.c"
+    break;
+
+  case 52: /* term: term MULOP unary_expression  */
+#line 932 "1905110_parser.y"
+                {
+                    logout<<"term : term MULOP unary_expression\n";
+
+                    string c = operationalTypeCast((yyvsp[-2].symInfo),(yyvsp[0].symInfo));
+
+                    if((yyvsp[-1].symInfo)->get_type()=="%"){
+                       (yyval.symInfo) = new SymbolInfo("term","term MULOP unary_expression",(yyvsp[-2].symInfo)->get_returnType());
+
+                       if((yyvsp[0].symInfo)->get_returnType()!="INT") errout<<"Line# "<<line_count<<" :Operands of modulus must be integers\n";
+                    }   
+
+                    else (yyval.symInfo) = new SymbolInfo("term","term MULOP unary_expression",c);
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2445 "y.tab.c"
+    break;
+
+  case 53: /* unary_expression: ADDOP unary_expression  */
+#line 955 "1905110_parser.y"
+                {
+                    logout<<"unary_expression : ADDOP unary_expressionn\n";
+                    (yyval.symInfo) = new SymbolInfo("unary_expression","ADDOP unary_expressionn",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2460 "y.tab.c"
+    break;
+
+  case 54: /* unary_expression: NOT unary_expression  */
+#line 966 "1905110_parser.y"
+                { 
+                    logout<<"unary_expression : NOT unary_expression\n";
+                    (yyval.symInfo) = new SymbolInfo("unary_expression","NOT unary_expression",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2475 "y.tab.c"
+    break;
+
+  case 55: /* unary_expression: factor  */
+#line 977 "1905110_parser.y"
+                { 
+                    logout<<"unary_expression : factor\n";
+                    (yyval.symInfo) = new SymbolInfo("unary_expression","factor",(yyvsp[0].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2489 "y.tab.c"
+    break;
+
+  case 56: /* factor: variable  */
+#line 989 "1905110_parser.y"
+                {
+                   logout<<"factor : variable\n";     
+                   (yyval.symInfo) = new SymbolInfo("factor" ,"variable ",(yyvsp[0].symInfo)->get_returnType());
+                   logout<<((yyvsp[0].symInfo)->get_returnType())<<'\n';
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());           
+                }
+#line 2504 "y.tab.c"
+    break;
+
+  case 57: /* factor: ID LPAREN argument_list RPAREN  */
+#line 1001 "1905110_parser.y"
+                {
+                    logout<<"factor : ID LPAREN argument_list RPAREN \n";
+                    SymbolInfo *s = symTable->LookUp((yyvsp[-3].symInfo)->get_type());  
+
+                    string c;
+                                                    
+                    if(s==NULL){
+                        errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<((yyvsp[-3].symInfo)->get_type())<< "\n";
+                    } 
+                    
+                    else if(parameterNum!=s->get_param().size()){
+                        c = s->get_returnType();
+                        if(parameterNum < s->get_param().size()){
+                            errout<<"Line# "<<line_count<<" : "<<"Too few arguments to function "<<((yyvsp[-3].symInfo)->get_name())<< "\n";
+                        }
+                        else if(parameterNum > s->get_param().size()){
+                            errout<<"Line# "<<line_count<<" : "<<"Too many arguments to function "<<((yyvsp[-3].symInfo)->get_name())<< "\n";
+                        }
+                    }
+                    else{
+                        c = s->get_returnType();
+                    }
+                    parameterNum = 0;
+
+                    (yyval.symInfo) = new SymbolInfo("factor","ID LPAREN argument_list RPAREN",c);
+
+                    (yyval.symInfo)->set_child((yyvsp[-3].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-3].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2543 "y.tab.c"
+    break;
+
+  case 58: /* factor: LPAREN expression RPAREN  */
+#line 1037 "1905110_parser.y"
+                {
+                    logout<<"factor : LPAREN expression RPAREN\n";
+                    (yyval.symInfo) = new SymbolInfo("factor","LPAREN expression RPAREN",(yyvsp[-1].symInfo)->get_returnType());
+                                                    
+                    (yyval.symInfo)->set_child((yyvsp[-2].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
+                    (yyval.symInfo)->set_child((yyvsp[0].symInfo));
+
+                    (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
+                    (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
+                }
+#line 2559 "y.tab.c"
     break;
 
   case 59: /* factor: CONST_INT  */
-#line 959 "1905110_parser.y"
+#line 1049 "1905110_parser.y"
                 {
                     logout<<"factor : CONST_INT \n";
-                    (yyval.symInfo) = new SymbolInfo("factor","CONST_INT");
+                    (yyval.symInfo) = new SymbolInfo("factor","CONST_INT","INT");
                                                     
                     (yyval.symInfo)->set_child((yyvsp[0].symInfo));
 
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2485 "y.tab.c"
+#line 2573 "y.tab.c"
     break;
 
   case 60: /* factor: CONST_FLOAT  */
-#line 969 "1905110_parser.y"
+#line 1059 "1905110_parser.y"
                 {
                     logout<<"factor : CONST_FLOAT \n";
-                    (yyval.symInfo) = new SymbolInfo("factor","CONST_FLOAT");
+                    (yyval.symInfo) = new SymbolInfo("factor","CONST_FLOAT","FLOAT");
                                                     
                     (yyval.symInfo)->set_child((yyvsp[0].symInfo));
 
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2499 "y.tab.c"
+#line 2587 "y.tab.c"
     break;
 
   case 61: /* factor: variable INCOP  */
-#line 979 "1905110_parser.y"
+#line 1069 "1905110_parser.y"
                 {
                     logout<<"factor : variable INCOP\n";
-                    (yyval.symInfo) = new SymbolInfo("factor","variable INCOP");
+                    (yyval.symInfo) = new SymbolInfo("factor","variable INCOP",(yyvsp[-1].symInfo)->get_returnType());
                                                     
                     (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
 
                     (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2513 "y.tab.c"
+#line 2601 "y.tab.c"
     break;
 
   case 62: /* factor: variable DECOP  */
-#line 989 "1905110_parser.y"
+#line 1079 "1905110_parser.y"
                 {
                     logout<<"factor : variable DECOP\n";
-                    (yyval.symInfo) = new SymbolInfo("factor","variable DECOP");
+                    (yyval.symInfo) = new SymbolInfo("factor","variable DECOP",(yyvsp[-1].symInfo)->get_returnType());
                                                     
                     (yyval.symInfo)->set_child((yyvsp[-1].symInfo));
                     (yyval.symInfo)->set_child((yyvsp[0].symInfo));
@@ -2524,11 +2612,11 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-1].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2528 "y.tab.c"
+#line 2616 "y.tab.c"
     break;
 
   case 63: /* argument_list: arguments  */
-#line 1002 "1905110_parser.y"
+#line 1092 "1905110_parser.y"
                 {
                     logout<<"argument_list : arguments\n";
                     (yyval.symInfo) = new SymbolInfo("argument_list","arguments");
@@ -2538,17 +2626,17 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                 }
-#line 2542 "y.tab.c"
+#line 2630 "y.tab.c"
     break;
 
   case 64: /* argument_list: %empty  */
-#line 1011 "1905110_parser.y"
+#line 1101 "1905110_parser.y"
                    { (yyval.symInfo) = new SymbolInfo("argument_list ","",line_count);}
-#line 2548 "y.tab.c"
+#line 2636 "y.tab.c"
     break;
 
   case 65: /* arguments: arguments COMMA logic_expression  */
-#line 1015 "1905110_parser.y"
+#line 1105 "1905110_parser.y"
                   {
                     logout<<"arguments : arguments COMMA logic_expression\n";
                     parameterNum++;
@@ -2562,26 +2650,26 @@ yyreduce:
                     (yyval.symInfo)->set_start((yyvsp[-2].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2566 "y.tab.c"
+#line 2654 "y.tab.c"
     break;
 
   case 66: /* arguments: logic_expression  */
-#line 1029 "1905110_parser.y"
+#line 1119 "1905110_parser.y"
                   { 
                     parameterNum++; logout<<"arguments : logic_expression\n";
 
-                    (yyval.symInfo) = new SymbolInfo("arguments","logic_expression");
+                    (yyval.symInfo) = new SymbolInfo("arguments","logic_expression",(yyvsp[0].symInfo)->get_returnType());
                                                     
                     (yyval.symInfo)->set_child((yyvsp[0].symInfo));
 
                     (yyval.symInfo)->set_start((yyvsp[0].symInfo)->get_start());
                     (yyval.symInfo)->set_end((yyvsp[0].symInfo)->get_end());
                   }
-#line 2581 "y.tab.c"
+#line 2669 "y.tab.c"
     break;
 
 
-#line 2585 "y.tab.c"
+#line 2673 "y.tab.c"
 
       default: break;
     }
@@ -2774,7 +2862,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1040 "1905110_parser.y"
+#line 1130 "1905110_parser.y"
 
 
 int main(int argc,char *argv[]){
@@ -2798,6 +2886,7 @@ int main(int argc,char *argv[]){
 
 	fclose(yyin);
  	logout.close();
+    
 	errout.close();
     parsetree.close();
 	return 0;
