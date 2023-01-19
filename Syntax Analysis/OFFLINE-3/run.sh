@@ -14,7 +14,7 @@
 # echo 'All ready, running'
 # #./1905110 input.txt
 
-yacc -d -y 1905110_parser.y 
+yacc -d -y 1905110_parser.y #-Wcounterexamples
 #echo 'Generated the parser C file as well the header file'
 g++ -w -c -o y.o y.tab.c
 #echo 'Generated the parser object file'
@@ -28,5 +28,5 @@ g++  1905110_SymbolInfo.cpp 1905110_ScopeTable.cpp 1905110_SymbolTable.cpp -c
 g++ 1905110_SymbolInfo.o 1905110_ScopeTable.o 1905110_SymbolTable.o y.o l.o -lfl -o 1905110 
 echo 'All ready, running'
 #./1905110 errorrecover.c
-./1905110 input.txt
+./1905110 input.c
 

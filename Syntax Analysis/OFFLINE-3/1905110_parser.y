@@ -12,7 +12,7 @@ ofstream logout;
 ofstream errout;
 ofstream parsetree;
 
-extern int line_count,interal_line,error;
+extern int line_count,interal_line,error_no;
 extern FILE *yyin;
 
 
@@ -20,15 +20,17 @@ extern FILE *yyin;
 SymbolTable *symTable = new SymbolTable(11);
 ScopeTable *sc = symTable->EnterScope();
 vector<SymbolInfo> parameter; 
+vector<string> argument;
 vector<SymbolInfo> declaredVar;
 int parameterNum = 0;
 
 int yylex(void);
 
-void yyerror( string s){
-	//printf("%s\n",s);
+void yyerror(string s){
+	logout<<"Error at line "<<line_count<<": "<<s<<"\n"<<endl;
+	errout<<"Error at line "<<line_count<<": "<<s<<"\n"<<endl;
+    error_no++;
 }
-
 
 void freeVector(vector<SymbolInfo*>*symInfo){
     for(SymbolInfo* info: *symInfo){
@@ -36,7 +38,6 @@ void freeVector(vector<SymbolInfo*>*symInfo){
 	}
 	delete symInfo;
 }
-
 void destroyChild(SymbolInfo* parent){
     for(SymbolInfo* info : *parent->get_child()){
         destroyChild(info);
@@ -58,6 +59,7 @@ string assignTypeCast(SymbolInfo *s1, SymbolInfo* s2){
             c = (a=="VOID")?b:a;
         }
         errout<<"Line# "<<line_count<<" :Void cannot be used in expression\n";
+        error_no++;
     }
     else if(a==b){
         c = a;
@@ -68,12 +70,12 @@ string assignTypeCast(SymbolInfo *s1, SymbolInfo* s2){
     }
     else if(a=="INT" && b=="FLOAT"){
         c = "INT";
-        errout<<"Line# "<<line_count<<" :Warning: possible loss of data in assignment of FLOAT to INT" ;
+        errout<<"Line# "<<line_count<<" :Warning: possible loss of data in assignment of FLOAT to INT\n" ;
+        error_no++;
     }
 
     return c;
 }
-
 string operationalTypeCast(SymbolInfo *s1, SymbolInfo* s2){
     string a = s1->get_returnType();
     string b = s2->get_returnType();
@@ -91,6 +93,7 @@ string operationalTypeCast(SymbolInfo *s1, SymbolInfo* s2){
         }
         
         errout<<"Line# "<<line_count<<" :Void cannot be used in expression\n";
+        error_no++;
     }
     else if(a=="INT" && b == "INT"){
         c = a;
@@ -104,21 +107,49 @@ string operationalTypeCast(SymbolInfo *s1, SymbolInfo* s2){
     return c;
 }
 
+void functionInsert(string name, string type)
+{
+    int x = symTable->Insert(name,"FUNCTION",type,logout);
+
+
+    if(!x){
+        SymbolInfo *s = symTable->LookUpCurrent(name);          
+        
+        if(s==NULL){
+            
+        }
+        else if( s->get_type() != "FUNCTION"){
+
+            errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
+            error_no++;
+        }
+
+        else if(type != s->get_returnType()){
+            errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
+            error_no++;
+        }
+
+        else{
+        //    errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<($2->get_type())<<"'\n";
+        }
+    }
+}
+
 %}
 
 %union{
     SymbolInfo *symInfo;
-    
 }
 
-%token<symInfo> DO CHAR IF FOR ELSE INT FLOAT VOID BREAK DOUBLE PRINTLN RETURN SWITCH CASE DEFAULT WHILE CONTINUE NEWLINE SEMICOLON LPAREN RPAREN LCURL RCURL LSQUARE RSQUARE COMMA NOT DECOP RELOP ASSIGNOP INCOP
+%token<symInfo> DO CHAR IF FOR ELSE INT FLOAT VOID BREAK DOUBLE PRINTLN RETURN SWITCH CASE DEFAULT WHILE CONTINUE NEWLINE SEMICOLON LPAREN RPAREN LCURL RCURL LSQUARE RSQUARE COMMA NOT DECOP RELOP ASSIGNOP INCOP 
 %token<symInfo> ADDOP MULOP CONST_INT CONST_FLOAT LOGICOP BITOP ID
-%type<symInfo> argument_list factor expression unary_expression simple_expression expression_statement term rel_expression logic_expression arguments start program unit func_in func_declaration func_definition parameter_list compound_statement var_declaration statement statements variable
-%type<symInfo> type_specifier LCURL_
+%type<symInfo> argument_list factor expression type_specifier unary_expression simple_expression expression_statement term rel_expression logic_expression arguments start program unit  func_declaration func_definition parameter_list compound_statement var_declaration statement statements variable
+%type<symInfo> LCURL_ 
 %type<symInfo> declaration_list
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
+
 %%
 start: program          
        {
@@ -180,140 +211,182 @@ unit : var_declaration
     ;
 
 
-func_in : type_specifier ID LPAREN
-          {
-            int x = symTable->Insert($2->get_type(),"FUNCTION",$1->get_returnType(),logout);
 
-
-            if(!x){
-                SymbolInfo *s = symTable->LookUpCurrent($2->get_type());          
-                
-                if(s==NULL){
-                    
-                }
-                else if( s->get_type() != "FUNCTION"){
-
-                    errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
-                }
-
-                else if($1->get_returnType() != s->get_returnType()){
-                    errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
-                }
-
-                else{
-                //    errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<($2->get_type())<<"'\n";
-                }
-            }
-    
-            $$ = new SymbolInfo(($2->get_type()),$1->get_returnType());
-            
-            $$->set_child($1);
-            $$->set_child($2);
-            $$->set_child($3);
-
-            $$->set_start($1->get_start());
-            $$->set_end($3->get_end());
-
-          }
-        ;
-
-func_declaration: func_in parameter_list RPAREN SEMICOLON 
+func_declaration: type_specifier ID LPAREN parameter_list RPAREN SEMICOLON 
                 {
                     logout<<"func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON\n";
-                    SymbolInfo *s = symTable->LookUp(($1->get_name()));
-                    s->set_param(parameter);
+
+                    int x = symTable->Insert($2->get_type(),"FUNCTION",$1->get_returnType(),logout);
+
+                    if(!x){
+                        SymbolInfo *s = symTable->LookUpCurrent($2->get_type());          
+                        
+                        if(s==NULL){
+                            
+                        }
+                        else if( s->get_type() != "FUNCTION"){
+
+                            errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
+                            error_no++;
+                        }
+
+                        else if(($1->get_returnType() != s->get_returnType())
+                             || ($1->get_param().size() != s->get_param().size())){
+                            errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
+                            error_no++;
+                        }
+
+                        else{
+                        //    errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<($2->get_type())<<"'\n";
+                        }
+                    }
+                    else{
+                        SymbolInfo *s = symTable->LookUp(($1->get_name()));
+                        $2->set_param(parameter);
+                    }
                     parameter.clear();
 
                     $$ = new SymbolInfo("func_declaration","type_specifier ID LPAREN parameter_list RPAREN SEMICOLON");
-                    
-                    vector<SymbolInfo*>* sI = $1->get_child();
 
-                    for(SymbolInfo* info : *sI ){
-                    $$->set_child(info);
-                    }
-
+                    $$->set_child($1);
                     $$->set_child($2);
                     $$->set_child($3);
                     $$->set_child($4);
+                    $$->set_child($5);
+                    $$->set_child($6);
 
                     $$->set_start($1->get_start());
-                    $$->set_end($4->get_end());
+                    $$->set_end($6->get_end());
 
                 }
-                | func_in RPAREN SEMICOLON               
+                | type_specifier ID LPAREN RPAREN SEMICOLON               
                 {
-                    logout<<"func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON\n";
-                    SymbolInfo *s = symTable->LookUp(($1->get_name()));
-                    s->set_param(parameter);
-                    parameter.clear();
+                    int x = symTable->Insert($2->get_type(),"FUNCTION",$1->get_returnType(),logout);
 
-                    $$ = new SymbolInfo("func_declaration","type_specifier ID LPAREN RPAREN SEMICOLON");
-                    $$->set_start($1->get_start());
-                    $$->set_end($1->get_end());
-                    
-                    vector<SymbolInfo*>* sI = $1->get_child();
+                    if(!x){
+                        SymbolInfo *s = symTable->LookUpCurrent($2->get_type());          
+                        
+                        if(s==NULL){
+                            
+                        }
+                        else if( s->get_type() != "FUNCTION"){
 
-                    for(SymbolInfo* info : *sI ){
-                    $$->set_child(info);
+                            errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
+                            error_no++;
+                        }
+
+                        else if($1->get_returnType() != s->get_returnType()){
+                            errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
+                            error_no++;
+                        }
+
+                        else{
+                        //    errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<($2->get_type())<<"'\n";
+                        }
                     }
 
+                    logout<<"func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON\n";
+                   // SymbolInfo *s = symTable->LookUp(($1->get_name()));
+                    
+
+                    $$ = new SymbolInfo("func_declaration","type_specifier ID LPAREN RPAREN SEMICOLON");
+                    // $$->set_start($1->get_start());
+                    // $$->set_end($1->get_end());
+                    
+                    // vector<SymbolInfo*>* sI = $1->get_child();
+
+                    // for(SymbolInfo* info : *sI ){
+                    // $$->set_child(info);
+                    // }
+
+                    $$->set_child($1);
                     $$->set_child($2);
                     $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);
                     
 
                     $$->set_start($1->get_start());
-                    $$->set_end($3->get_end());
+                    $$->set_end($5->get_end());
 
                 }
                 ;
-func_definition : func_in parameter_list RPAREN compound_statement 
+func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInsert( $2->get_type(), $1->get_returnType()) ;} compound_statement 
                   {
-                     SymbolInfo *s = symTable->LookUp(($1->get_name()));
-                     s->set_param(parameter);
-                     parameter.clear();
+                     SymbolInfo *s = symTable->LookUp(($2->get_type()));
+                    
+                     if(s!=NULL){
+                        s->set_param(parameter);
+                        parameter.clear();
+                     }
                      logout<<"func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement\n";
 
                      $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN parameter_list RPAREN compound_statement");
                     
                      
-                     vector<SymbolInfo*>* sI = $1->get_child();
-                     for(SymbolInfo* info : *sI ){
-                       $$->set_child(info);
-                     }
+                    //vector<SymbolInfo*>* sI = $1->get_child();
+                    //  for(SymbolInfo* info : *sI ){
+                    //    $$->set_child(info);
+                    //  }
+                     $$->set_child($1);
                      $$->set_child($2);
                      $$->set_child($3);
                      $$->set_child($4);
+                     $$->set_child($5);
+                    // $$->set_child($6);
+                     $$->set_child($7);
 
                      $$->set_start($1->get_start());
-                     $$->set_end($4->get_end());
+                     $$->set_end($7->get_end());
                      
                   }
-                | func_in RPAREN compound_statement                
+                | type_specifier ID LPAREN RPAREN { functionInsert( $2->get_type(), $1->get_returnType()) ;} compound_statement                
                   {  
-                     SymbolInfo *s = symTable->LookUp(($1->get_name()));
-                     s->set_param(parameter);
-                     parameter.clear(); 
+                     SymbolInfo *s = symTable->LookUp(($2->get_type()));
+                    // s->set_param(parameter);
+                    // parameter.clear(); 
                      logout<<"func_definition : type_specifier ID LPAREN RPAREN compound_statement\n";     
 
                      $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN RPAREN compound_statement");
                     
                      
-                     vector<SymbolInfo*>* sI = $1->get_child();
-                     for(SymbolInfo* info : *sI ){
-                       $$->set_child(info);
-                     }
+                    // vector<SymbolInfo*>* sI = $1->get_child();
+                    //  for(SymbolInfo* info : *sI ){
+                    //    $$->set_child(info);
+                    //  }
+                     $$->set_child($1);
                      $$->set_child($2);
                      $$->set_child($3);
+                     $$->set_child($4);
+                    // $$->set_child($5);
+                     $$->set_child($6);
 
                      $$->set_start($1->get_start());
-                     $$->set_end($3->get_end());                                     
+                     $$->set_end($6->get_end());                                     
                   }
+                  | type_specifier ID LPAREN error RPAREN compound_statement{
+                    $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN parameter_list RPAREN compound_statement");
+                    // vector<SymbolInfo*>* sI = $1->get_child();
+                    //  for(SymbolInfo* info : *sI ){
+                    //    $$->set_child(info);
+                    //  }
+                     $$->set_child($1);
+                     $$->set_child($2);
+                     $$->set_child($3);
+                     $$->set_child(new SymbolInfo("parameter_list","error"));
+                    // $$->set_child($5);
+                     $$->set_child($5);
+
+                     $$->set_start($1->get_start());
+                     $$->set_end($6->get_end());  
+                  }
+               
                 ;
 
                 
-parameter_list  : parameter_list COMMA type_specifier ID 
+parameter_list  : parameter_list  COMMA type_specifier ID 
                     {
-                        parameter.push_back(SymbolInfo(($4->get_type()),$3->get_returnType()));
+                        parameter.push_back(SymbolInfo(($4->get_type()),"ID",$3->get_returnType()));
                         logout<<"parameter_list : parameter_list COMMA type_specifier ID\n";
 
                         $$ = new SymbolInfo("parameter_list","parameter_list COMMA type_specifier ID");
@@ -327,7 +400,7 @@ parameter_list  : parameter_list COMMA type_specifier ID
                     }
                 | parameter_list COMMA type_specifier     
                     {
-                        parameter.push_back(SymbolInfo("",$3->get_returnType()));
+                        parameter.push_back(SymbolInfo("","ID",$3->get_returnType()));
                         logout<<"parameter_list : parameter_list COMMA type_specifier\n";
 
                         $$ = new SymbolInfo("parameter_list","parameter_list COMMA type_specifier");
@@ -338,9 +411,9 @@ parameter_list  : parameter_list COMMA type_specifier ID
                         $$->set_start($1->get_start());
                         $$->set_end($3->get_end());
                     }
-                | type_specifier ID                       
+                | type_specifier  ID                       
                     {
-                        parameter.push_back(SymbolInfo(($2->get_type()),$1->get_returnType()));
+                        parameter.push_back(SymbolInfo(($2->get_type()),"ID",$1->get_returnType()));
                         logout << "parameter_list : type_specifier ID\n" ;
 
                         $$ = new SymbolInfo("parameter_list","type_specifier  ID");
@@ -351,9 +424,9 @@ parameter_list  : parameter_list COMMA type_specifier ID
                         $$->set_end($2->get_end());
                         
                     }
-                | type_specifier                          
+                | type_specifier                      
                     {   
-                        parameter.push_back(SymbolInfo("",$1->get_name()));
+                        parameter.push_back(SymbolInfo("","ID",$1->get_name()));
                         logout<<"parameter_list : type_specifier\n";
 
                         $$ = new SymbolInfo("parameter_list","type_specifier");
@@ -362,6 +435,21 @@ parameter_list  : parameter_list COMMA type_specifier ID
                         $$->set_start($1->get_start());
                         $$->set_end($1->get_end());
                     }
+                // | parameter_list error COMMA type_specifier ID{
+                //     $$ = new SymbolInfo("parameter_list","error");
+                //     $$->set_start($1->get_start());
+                //     $$->set_end($1->get_end());
+                // }
+                // | parameter_list error COMMA type_specifier{
+                //     $$ = new SymbolInfo("parameter_list","error");
+                //     $$->set_start($1->get_start());
+                //     $$->set_end($1->get_end());
+                // }
+                // | type_specifier error{
+                //     $$ = new SymbolInfo("parameter_list","error");
+                //     $$->set_start($1->get_start());
+                //     $$->set_end($1->get_end());
+                // }
                 ;
 
 LCURL_          :   LCURL 
@@ -371,7 +459,10 @@ LCURL_          :   LCURL
 
                             int x = symTable->Insert(i.get_name(),i.get_type(),i.get_returnType(),logout);
 
-                            if(!x)errout<<"Line# "<<line_count<<" : Redefinition of parameter '"<<i.get_name()<<"'\n";
+                            if(!x){
+                                errout<<"Line# "<<line_count<<" : Redefinition of parameter '"<<i.get_name()<<"'\n";
+                                error_no++;
+                            }
                         }
 
                         $$ = new SymbolInfo("","");
@@ -436,12 +527,13 @@ var_declaration : type_specifier declaration_list SEMICOLON
                         
                         if($1->get_type()=="VOID"){
                             errout<<"Line# "<<line_count<<": Variable or field '"<<info.get_name()<<"' declared void\n";
+                            error_no++;
                         }
                         
                         info.set_returnType($1->get_returnType());
                        
                         int x = symTable->Insert(info.get_name(), info.get_type(),info.get_returnType(),logout);
-
+                        
                         SymbolInfo *s = symTable->LookUpCurrent(info.get_name());
 
                         if(s->get_type()=="ARRAY"){
@@ -457,14 +549,17 @@ var_declaration : type_specifier declaration_list SEMICOLON
                             if(info.get_type() != s->get_type() && info.get_returnType() != s->get_returnType() ){
 
                                 errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
+                                error_no++;
                             }
 
                             else if(info.get_returnType() != s->get_returnType()){
                                 errout<<"Line# "<<line_count<<" : Conflicting types for "<<s->get_name()<<"\n";
+                                error_no++;
                             }
 
                             else{
                                 errout<<"Line# "<<line_count<<" : Redefinition of variable '"<<(info.get_name())<<"'\n";
+                                error_no++;
                             }
                         }
                     }
@@ -531,7 +626,7 @@ declaration_list: declaration_list COMMA ID
                             
                         }
                 | declaration_list COMMA ID LSQUARE CONST_INT RSQUARE {
-                            logout<<"declaration_list : declaration_list COMMA ID LTHIRD CONST_INT RTHIRD\n";
+                            logout<<"declaration_list : declaration_list COMMA ID LSQUARE CONST_INT RSQUARE\n";
                             
                             SymbolInfo symInfo = SymbolInfo($3->get_type(),"ARRAY");
 
@@ -573,7 +668,7 @@ declaration_list: declaration_list COMMA ID
                           
                     }
                 | ID LSQUARE  CONST_INT RSQUARE {
-                            logout<<"declaration_list : ID LTHIRD CONST_INT RTHIRD\n";
+                            logout<<"declaration_list : ID LSQUARE CONST_INT RSQUARE\n";
 
                             
                             SymbolInfo symInfo = SymbolInfo($1->get_type(),"ARRAY");
@@ -592,7 +687,37 @@ declaration_list: declaration_list COMMA ID
                             $$->set_end($4->get_end());
                             
                     }
+
+                | declaration_list error COMMA ID{
+                    $$  = new SymbolInfo("declaration_list","ERROR");
+                    errout<<"Line# "<<line_count<<": Syntax error_no at declaration list of variable declaration list\n";
+                }
+                | declaration_list error COMMA ID LSQUARE CONST_INT RSQUARE{
+                    $$  = new SymbolInfo("declaration_list","ERROR");
+                    errout<<"Line# "<<line_count<<": Syntax error_no at declaration list of variable declaration list\n";
+                }
+                | ID error{
+                    $$  = new SymbolInfo("declaration_list","ERROR");
+                    errout<<"Line# "<<line_count<<": Syntax error_no at declaration list of variable declaration list\n";
+                }
+                | ID LSQUARE CONST_INT RSQUARE error{
+                    $$  = new SymbolInfo("declaration_list","ERROR");
+                    errout<<"Line# "<<line_count<<": Syntax error_no at declaration list of variable declaration list\n";
+                }
+                | ID LSQUARE CONST_FLOAT RSQUARE{
+                    $$  = new SymbolInfo("declaration_list","ERROR");
+                 //   errout<<"Line# "<<line_count<<": ARRAY Index have to be integer\n";
+                }
+                | declaration_list COMMA ID LSQUARE CONST_FLOAT RSQUARE{
+                    $$  = new SymbolInfo("declaration_list","ERROR");
+                //    errout<<"Line# "<<line_count<<": ARRAY Index have to be integer\n";
+                }
+
                 ;
+
+
+
+
 
 statements      : statement             
                   {
@@ -761,6 +886,14 @@ expression_statement: SEMICOLON
                         $$->set_start($1->get_start());
                         $$->set_end($2->get_end());
                     }
+                    | expression error{
+                        $$ = new SymbolInfo("expression_statement","error");
+                      
+                        
+                        $$->set_start($1->get_start());
+                        $$->set_end($1->get_end());
+                    }
+                   
                     ;
 
 variable        : ID                            
@@ -771,9 +904,13 @@ variable        : ID
                     s = symTable->LookUp($1->get_type());  
                     if(s==NULL){
                         errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<($1->get_type())<< "\n";
+                        error_no++;
+                        $$ = new SymbolInfo("variable","ID", "");
                     } 
-
-                    $$ = new SymbolInfo("variable","ID", "g");
+                    else{
+                        $$ = new SymbolInfo("variable","ID", s->get_returnType());
+                    }
+                    
                     
                     $$->set_child($1);
 
@@ -790,9 +927,11 @@ variable        : ID
                     
                     if(s->get_type()!="ARRAY"){
                         errout<<"Line# "<<line_count<<" : "<<($1->get_type())<<" is not a array\n";
+                        error_no++;
                     }
                     else if($3->get_returnType()!="INT"){
                         errout<<"Line# "<<line_count<<" : "<<" Array subscript is not an integer\n";
+                        error_no++;
                     }
                     
                     logout<<"variable : ID LSQUARE expression RSQUARE\n";
@@ -822,7 +961,6 @@ expression      : logic_expression
                  {
                     logout<<"expression : variable ASSIGNOP logic_expression\n";
 
-                    logout<<($1->get_returnType())<<" "<<($3->get_returnType())<<'\n';
                     string c = assignTypeCast($1,$3);
 
                     $$ = new SymbolInfo("expression","variable ASSIGNOP logic_expression",c);
@@ -838,6 +976,13 @@ expression      : logic_expression
                     
                     
                  }
+                 | variable ASSIGNOP error {
+
+                    $$ = new SymbolInfo("expression","error",$1->get_returnType());
+
+                    $$->set_start($1->get_start());
+                    $$->set_end($1->get_end());
+                 }  
                 ;
 
 logic_expression: rel_expression                        
@@ -935,7 +1080,10 @@ term            : unary_expression
                     if($2->get_type()=="%"){
                        $$ = new SymbolInfo("term","term MULOP unary_expression",$1->get_returnType());
 
-                       if($3->get_returnType()!="INT") errout<<"Line# "<<line_count<<" :Operands of modulus must be integers\n";
+                       if($3->get_returnType()!="INT" || $1->get_returnType()!="INT") {
+                        errout<<"Line# "<<line_count<<" :Operands of modulus must be integers\n";
+                        error_no++;
+                       }
                     }   
 
                     else $$ = new SymbolInfo("term","term MULOP unary_expression",c);
@@ -987,7 +1135,6 @@ factor          : variable
                 {
                    logout<<"factor : variable\n";     
                    $$ = new SymbolInfo("factor" ,"variable ",$1->get_returnType());
-                   logout<<($1->get_returnType())<<'\n';
                                                     
                     $$->set_child($1);
 
@@ -1000,26 +1147,42 @@ factor          : variable
                     logout<<"factor : ID LPAREN argument_list RPAREN \n";
                     SymbolInfo *s = symTable->LookUp($1->get_type());  
 
-                    string c;
+                    string c = "";
                                                     
                     if(s==NULL){
                         errout<<"Line# "<<line_count<<" : "<<"Undeclared function "<<($1->get_type())<< "\n";
+                        error_no++;
                     } 
                     
                     else if(parameterNum!=s->get_param().size()){
+
                         c = s->get_returnType();
                         if(parameterNum < s->get_param().size()){
                             errout<<"Line# "<<line_count<<" : "<<"Too few arguments to function "<<($1->get_name())<< "\n";
+                            error_no++;
                         }
                         else if(parameterNum > s->get_param().size()){
-                            errout<<"Line# "<<line_count<<" : "<<"Too many arguments to function "<<($1->get_name())<< "\n";
+                            errout<<"Line# "<<line_count<<" : "<<"Too many arguments to function "<<($1->get_type())<< "\n";
+                            error_no++;
                         }
+
                     }
                     else{
+
+                        vector<SymbolInfo> temp = s->get_param();
                         c = s->get_returnType();
+
+                        for(int i=0;i<argument.size();i++){
+
+                            if(argument[i] != temp[i].get_returnType()){
+                                errout<<"Line# "<<line_count<<" : "<<"Type mismatch for argument "<< (i+1)<<" of '"<<($1->get_type())<< "'\n";
+                                error_no++;
+                            }
+                        }
+                        argument.clear();
                     }
                     parameterNum = 0;
-
+                  
                     $$ = new SymbolInfo("factor","ID LPAREN argument_list RPAREN",c);
 
                     $$->set_child($1);
@@ -1095,14 +1258,21 @@ argument_list   : arguments
 
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
                 }
-                |  { $$ = new SymbolInfo("argument_list ","",line_count);}
+                |  
+                { 
+                    $$ = new SymbolInfo("argument_list ","",line_count);
+                }
                 ;
 
 arguments       : arguments COMMA logic_expression
                   {
+
                     logout<<"arguments : arguments COMMA logic_expression\n";
                     parameterNum++;
+
+                    argument.push_back($3->get_returnType());
 
                     $$ = new SymbolInfo("arguments","arguments COMMA logic_expression");
                                                     
@@ -1116,6 +1286,9 @@ arguments       : arguments COMMA logic_expression
                 | logic_expression 
                   { 
                     parameterNum++; logout<<"arguments : logic_expression\n";
+
+                    argument.clear();
+                    argument.push_back($1->get_returnType());
 
                     $$ = new SymbolInfo("arguments","logic_expression",$1->get_returnType());
                                                     
@@ -1143,8 +1316,8 @@ int main(int argc,char *argv[]){
 	yyparse();
 
 
-	logout<<"Total lines: "<<line_count<<endl;
-    logout<<"Total errors: "<<error<<endl;
+	logout<<"Total Lines: "<<line_count<<endl;
+    logout<<"Total Errors: "<<error_no<<endl;
 
 	fclose(yyin);
  	logout.close();

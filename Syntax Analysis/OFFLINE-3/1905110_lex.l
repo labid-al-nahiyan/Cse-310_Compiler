@@ -24,7 +24,7 @@ extern ofstream logout;
 //extern SymbolTable *symTable;
 //extern ofstream //tokenout;
 //ll buckets = 10;
-int error = 0;
+int error_no = 0;
 int checkMulti = 0;
 string str1,ch,logStr;
 
@@ -253,8 +253,9 @@ printf	 {
 {DIGITS}{LETTER}+ {
 				ch.clear();
 				ch+=yytext;
-				error++;
+				error_no++;
 				logout<<"Error at line# "<<line_count<<": INVALID_ID_SUFFIX_NUM_PREFIX "<<ch<<'\n';
+				
 		}
 
 {FLOAT} {
@@ -267,15 +268,18 @@ printf	 {
 {DIGITS}?((\.)+{DIGITS})*?(E[+-]?{DIGITS})?  {
 				ch.clear();
 				ch+=yytext;
-				error++;
+				error_no++;
 				logout<<"Error at line# "<<line_count<<": TOO_MANY_DECIMAL_POINTS "<<ch<<"\n";
+
 		
 	}
 {DIGITS}?(\.{DIGITS})?(E[+-]?(\.*{DIGITS})*) {
 				ch.clear();
 				ch+=yytext;
-				error++;
+				error_no++;
 				logout<<"Error at line# "<<line_count<<": ILLFORMED_NUMBER "<<ch<<"\n";
+
+				
 		
 	}
 
@@ -288,6 +292,7 @@ printf	 {
 				//terminalSymbol("ID",yytext,line_count);
 				return ID;
 		}
+
 
 
 \'  	{
@@ -310,13 +315,13 @@ printf	 {
 
 
 <CONST_CHAR>{NEWLINE} {
-			error++;
+			error_no++;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
 			line_count++;
 			BEGIN(INITIAL);
 		}
 <CONST_CHAR><<EOF>> {
-			error++;
+			error_no++;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_CONST_CHAR '"<<logStr<<'\n';
 			line_count++;
 			BEGIN(INITIAL);
@@ -329,7 +334,7 @@ printf	 {
 					logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme \0 found\n";
 				}
 				else{
-					error++;
+					error_no++;
 					logout<<"Error at line# "<<line_count<<": EMPTY_CONST_CHAR '"<<logStr<<"'\n";
 				}
 			}
@@ -340,7 +345,7 @@ printf	 {
 				logout<<"Line# "<<line_count<<": Token <CONST_CHAR> Lexeme "<<ch<<" found\n";	
 			}
 			else{
-				error++;
+				error_no++;
 				logout<<"Error at line# "<<line_count<<": MULTICHAR_CONST_CHAR '"<<ch<<"'\n";
 			
 			}
@@ -379,7 +384,7 @@ printf	 {
 			interal_line++;
 		}
 <STRING>{NEWLINE} {
-			error++;
+			error_no++;
 			line_count+=interal_line;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_STRING "<<logStr<<"\n";
 			line_count++;
@@ -387,7 +392,7 @@ printf	 {
 			BEGIN(INITIAL);
 		}
 <STRING><<EOF>> {
-			error++;
+			error_no++;
 			line_count+=interal_line;
 			logout<<"Error at line# "<<line_count<<": UNFINISHED_STRING "<<logStr<<"\n";
 			line_count++;
@@ -399,7 +404,7 @@ printf	 {
 			
 			logStr+=yytext;
 			if(ch.size() == 0){
-					error++;
+					error_no++;
 					logout<<"Error at line# "<<line_count<<": EMPTY STRING ''\n";	
 			}
 			else{
@@ -480,18 +485,21 @@ printf	 {
 		BEGIN(INITIAL);
 	}
 <M_COMMENT><<EOF>> {
-		error++;
+		error_no++;
 		line_count+=interal_line;
 		logout<<"Error at line# "<<line_count<<": UNFINISHED_COMMENT "<<logStr<<"\n";
 		interal_line=0;
 		BEGIN(INITIAL);
+
+	
 }
 
 . {
 		ch.clear();
 		ch+=yytext;
-		error++;
+		error_no++;
 		logout<<"Error at line# "<<line_count<<": UNRECOGNIZED_CHAR "<<ch<<"\n";
+		
 		
 }
 

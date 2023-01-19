@@ -1,6 +1,5 @@
 #include "1905110_ScopeTable.h"
 
-
 typedef long long ll;
 
 long long  ScopeTable::get_id(){
@@ -42,9 +41,6 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
     SymbolInfo *temp = symbolArray[hash_value];
     SymbolInfo *newSymbol=NULL ;
 
-
-    
-
     if(temp == NULL ){
         newSymbol = NULL ;
     }
@@ -57,13 +53,12 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
                 break;
             }
             temp = temp->get_next();
+        
         }
     }
-    cout<<"::\n";
     if(newSymbol != NULL ){
         // if(newSymbol->get_returnType()!="FUNCTION")logout<<"\t"<<name<<" already exisits in the current ScopeTable\n";
-     
-         return 0;
+        return 0;
     }
     else{
 
@@ -120,9 +115,7 @@ bool ScopeTable::Delete(string name){
     for(ll i=0 ; i< this->num_buckets ; i++){
 
         temp = symbolArray[i];
-
         if(temp == NULL )continue;
-
 
         temp1 = temp;
         count = 0;
@@ -131,7 +124,7 @@ bool ScopeTable::Delete(string name){
         if(temp->get_name()==name){
 
             symbolArray[i] = NULL ;
-            cout<<"\tDeleted '"<<name<<"' from ScopeTable# "<<this->get_id()<<" at position "<<i+1<<", 1"<<"\n";
+            // cout<<"\tDeleted '"<<name<<"' from ScopeTable# "<<this->get_id()<<" at position "<<i+1<<", 1"<<"\n";
             return 1;
         }
 
@@ -144,7 +137,7 @@ bool ScopeTable::Delete(string name){
                 temp1->set_next(temp->get_next());
 
 
-                cout<<"\tDeleted '"<<name<<"' from ScopeTable# "<<this-id<<" at position "<<i+1<<", "<<count<<"\n";
+              //  cout<<"\tDeleted '"<<name<<"' from ScopeTable# "<<this-id<<" at position "<<i+1<<", "<<count<<"\n";
                 return 1;
 
             }
@@ -158,7 +151,7 @@ bool ScopeTable::Delete(string name){
 
     }
 
-    cout<<"\tNot found in the current ScopeTable\n";
+   // cout<<"\tNot found in the current ScopeTable\n";
     delete temp;
     delete temp1;
     return 0;
@@ -186,13 +179,19 @@ void ScopeTable::Print(ofstream & logout){
             logout<<"<"<<temp->get_name()<<", ";
 
             if(temp->get_type()!="ID"){
-                logout<<temp->get_type()<<",";
+
+                logout<<temp->get_type()<<","<<temp->get_returnType()<<" >";
+            
             }
-            logout<<temp->get_returnType();
-            logout<<"> ";
+            else{
+            
+                logout<<temp->get_returnType()<<"> ";
+            
+            }
 
             temp = temp->get_next();
         }
+
         if(check){
             logout<<'\n';
         }

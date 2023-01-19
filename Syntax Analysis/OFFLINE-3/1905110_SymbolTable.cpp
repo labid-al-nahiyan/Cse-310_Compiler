@@ -37,10 +37,10 @@ bool SymbolTable::Insert(string name, string type, string returnType, ofstream& 
       //  cout<<"\tCreate ScopeTable First\n";
         return 0;
     }
-    cout<<name<<'\n';
+  //  cout<<name<<'\n';
     ScopeTable *temp = currentScope;
     int x =  currentScope->Insert(name,type,returnType, logout);
-    cout<<x<<'\n';
+  //  cout<<x<<'\n';
     return x;
 }
 bool SymbolTable::Remove(string name){
@@ -77,7 +77,6 @@ SymbolInfo* SymbolTable::LookUpCurrent(string name){
         //cout<<"\t'"<<name<<"' not found in any of the ScopeTables\n";
         return NULL ;
     }
-    cout<<name<<'\n';
     ScopeTable *temp = currentScope;
 
  //   while(temp!=NULL ){
