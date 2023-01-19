@@ -28,6 +28,7 @@ SymbolInfo::SymbolInfo(string name,string type,int line){
     SymbolInfo::startline = line;
     SymbolInfo::endline = line;
     SymbolInfo::childList = new vector<SymbolInfo*>();
+
 }
 SymbolInfo* SymbolInfo::get_next(){
         return next;
@@ -38,14 +39,14 @@ void SymbolInfo::set_next(SymbolInfo *next){
 string SymbolInfo::get_type(){
         return SymbolInfo::type;
     }
+void SymbolInfo::set_type(string type){
+        SymbolInfo::type = type;
+    }
 string SymbolInfo::get_name(){
         return SymbolInfo::name;
     }
 string SymbolInfo::get_returnType(){
         return SymbolInfo::returnType;
-    }
-void SymbolInfo::set_type(string type){
-        SymbolInfo::type = type;
     }
 vector<SymbolInfo> SymbolInfo::get_param(){
         return SymbolInfo::parameters;

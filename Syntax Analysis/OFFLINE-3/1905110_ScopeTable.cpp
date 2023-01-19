@@ -20,8 +20,8 @@ ll ScopeTable::SDBMHash(string str){
         {
             hash = (str[i]) + (hash << 6) + (hash << 16) - hash;
         }
-
-        return hash%(this->num_buckets);
+        
+        return abs(hash%(this->num_buckets));
     }
 ScopeTable::ScopeTable(ll num_buckets ,ll id, ScopeTable* parent_scope){
 
@@ -36,10 +36,14 @@ ScopeTable::ScopeTable(ll num_buckets ,ll id, ScopeTable* parent_scope){
 }
 bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logout){
 
-    ll hash_value = SDBMHash(name);
+
+    ll hash_value = abs(SDBMHash(name));
 
     SymbolInfo *temp = symbolArray[hash_value];
     SymbolInfo *newSymbol=NULL ;
+
+
+    
 
     if(temp == NULL ){
         newSymbol = NULL ;
@@ -55,7 +59,7 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
             temp = temp->get_next();
         }
     }
-
+    cout<<"::\n";
     if(newSymbol != NULL ){
         // if(newSymbol->get_returnType()!="FUNCTION")logout<<"\t"<<name<<" already exisits in the current ScopeTable\n";
      
@@ -64,12 +68,10 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
     else{
 
          ll count = 0;
-         ll hash_value = SDBMHash(name),check = 0;
+         ll hash_value = abs(SDBMHash(name)),check = 0;
 
-         SymbolInfo *temp;
-         if(returnType=="") temp = new SymbolInfo(name,type);
-         else temp = new SymbolInfo(name,type,returnType);
-
+         SymbolInfo *temp = new SymbolInfo(name,type,returnType);
+         
          if(symbolArray[hash_value]==NULL ){
              symbolArray[hash_value] = temp;
          }
@@ -84,15 +86,14 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
              temp1->set_next(temp);
              count++;
          }
-        
          return 1;
     }
 }
 SymbolInfo* ScopeTable::LookUp(string name){
 
     ll count = 0;
-    ll hash_value = SDBMHash(name);
-
+    ll hash_value = abs(SDBMHash(name));
+    
     SymbolInfo *temp = this->symbolArray[hash_value];
 
     if(temp == NULL ){

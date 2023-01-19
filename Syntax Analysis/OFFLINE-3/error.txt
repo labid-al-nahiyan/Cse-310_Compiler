@@ -1,7 +1,15 @@
-Line# 14 : 'z' redeclared as different kind of symbol 
-Line# 20 : Conflicting types for i
-Line# 22: Variable or field 'e' declared void
-Line# 23 : c is not a array
-Line# 25 :  Array subscript is not an integer
-Line# 25 :Void cannot be used in expression
-Line# 26 :Operands of modulus must be integers
+Line# 19 : Redefinition of parameter 'a'
+Line# 23 : Conflicting types for foo3
+Line# 27 : 'z' redeclared as different kind of symbol 
+Line# 43: Variable or field 'e' declared void
+Line# 44 : Conflicting types for a
+Line# 44 : Conflicting types for c
+Line# 49 : Too few arguments to function ID
+Line# 50 : Too many arguments to function ID
+Line# 52 : Undeclared variable k
+Line# 53 : b is not a array
+Line# 55 :  Array subscript is not an integer
+Line# 56 :Void cannot be used in expression
+Line# 59 :Void cannot be used in expression
+Line# 60 :Warning: possible loss of data in assignment of FLOAT to INTLine# 62 :Operands of modulus must be integers
+Line# 64 : Undeclared function foo5

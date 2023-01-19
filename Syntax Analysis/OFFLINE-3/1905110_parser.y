@@ -17,7 +17,7 @@ extern FILE *yyin;
 
 
 
-SymbolTable *symTable = new SymbolTable(12);
+SymbolTable *symTable = new SymbolTable(11);
 ScopeTable *sc = symTable->EnterScope();
 vector<SymbolInfo> parameter; 
 vector<SymbolInfo> declaredVar;
@@ -182,12 +182,16 @@ unit : var_declaration
 
 func_in : type_specifier ID LPAREN
           {
-            int x = symTable->Insert(($2->get_type()),"FUNCTION",$1->get_returnType(),logout);
+            int x = symTable->Insert($2->get_type(),"FUNCTION",$1->get_returnType(),logout);
+
 
             if(!x){
                 SymbolInfo *s = symTable->LookUpCurrent($2->get_type());          
-
-                if( s->get_type() != "FUNCTION"){
+                
+                if(s==NULL){
+                    
+                }
+                else if( s->get_type() != "FUNCTION"){
 
                     errout<<"Line# "<<line_count <<" : '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
                 }
@@ -434,13 +438,10 @@ var_declaration : type_specifier declaration_list SEMICOLON
                             errout<<"Line# "<<line_count<<": Variable or field '"<<info.get_name()<<"' declared void\n";
                         }
                         
-                         // info.set_type($1->get_returnType());
-
                         info.set_returnType($1->get_returnType());
-
-                        
                        
                         int x = symTable->Insert(info.get_name(), info.get_type(),info.get_returnType(),logout);
+
                         SymbolInfo *s = symTable->LookUpCurrent(info.get_name());
 
                         if(s->get_type()=="ARRAY"){
@@ -558,9 +559,7 @@ declaration_list: declaration_list COMMA ID
                 | ID{
                             logout<<"declaration_list : ID "<<'\n';
 
-                            //declaredVar = new vector<SymbolInfo*>();
-
-                            //declaredVar->push_back($1);
+                            
                             declaredVar.push_back(SymbolInfo($1->get_type(),$1->get_name()));
                             
                             $$  = new SymbolInfo("declaration_list","ID");
@@ -580,8 +579,7 @@ declaration_list: declaration_list COMMA ID
                             SymbolInfo symInfo = SymbolInfo($1->get_type(),"ARRAY");
                             symInfo.set_arraySize(stoi($3->get_type()));
                             declaredVar.push_back(symInfo);
-                           // declaredVar = new vector<SymbolInfo*>();
-                           // declaredVar->push_back($1);
+                           
 
                             $$  = new SymbolInfo("declaration_list","ID LSQUARE CONST_INT RSQUARE");
 
@@ -775,7 +773,7 @@ variable        : ID
                         errout<<"Line# "<<line_count<<" : "<<"Undeclared variable "<<($1->get_type())<< "\n";
                     } 
 
-                    $$ = new SymbolInfo("variable","ID", s->get_returnType());
+                    $$ = new SymbolInfo("variable","ID", "g");
                     
                     $$->set_child($1);
 

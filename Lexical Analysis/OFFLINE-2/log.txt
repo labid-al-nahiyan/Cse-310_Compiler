@@ -8,16 +8,15 @@ Error at line# 7: UNFINISHED_CONST_CHAR '
 Error at line# 8: MULTICHAR_CONST_CHAR 'ab cd'
 Error at line# 9: UNFINISHED_CONST_CHAR '\'
 Error at line# 10: EMPTY_CONST_CHAR ''
-Error at line# 11: UNFINISHED_STRING "abcd
-Error at line# 13: UNFINISHED_STRING "abcd\
-efgh
-Line# 14: Token <ID> Lexeme ijk found
+Line# 11: Token <ID> Lexeme __efh_a3_ found
 	ScopeTable# 1
-	7--> <ijk,ID> 
-Error at line# 14: UNFINISHED_STRING "
+	6--> <__efh_a3_,ID> 
+Error at line# 12: UNFINISHED_STRING "abcd
+Line# 13: Token <MULTI LINE STRING> Lexeme "abcd\
+ijk" found
 Error at line# 16: UNFINISHED_COMMENT /**abc
 def
 	ScopeTable# 1
-	7--> <ijk,ID> 
+	6--> <__efh_a3_,ID> 
 Total lines: 16
-Total errors: 14
+Total errors: 12

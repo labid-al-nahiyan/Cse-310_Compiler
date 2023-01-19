@@ -53,7 +53,7 @@ LOGICOP "&&"|"||"
 DIGIT [0-9]
 DIGITS {DIGIT}+
 FLOAT {DIGITS}?(\.{DIGITS})?(E[+-]?{DIGITS})?
-IDENTIFIER [_A-Za-z][A-Za-z0-9_]*
+IDENTIFIER [_A-Za-z][_A-Za-z0-9]*
 NEWLINE \n
 
 %%
