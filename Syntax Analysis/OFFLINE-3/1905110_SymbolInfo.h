@@ -8,7 +8,7 @@ using namespace std;
 class SymbolInfo
 {
 private:
-    string name,type,returnType;
+    string name,type,returnType,value="";
     vector<SymbolInfo> parameters;
     vector<SymbolInfo*>* childList;
     int startline ,endline , arraySize;
@@ -36,7 +36,10 @@ public:
     void set_arraySize(int size);
     int get_arraySize();
     int get_end();
+    string get_value();
+    void set_value(string s);
     SymbolInfo* get_next();
+
     void printChild(int ,ofstream&);
 };
 

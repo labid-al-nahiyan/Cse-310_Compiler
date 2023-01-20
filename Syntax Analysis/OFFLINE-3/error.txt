@@ -1,9 +1,1 @@
-Error at line 3: syntax error
-
-Error at line 9: syntax error
-
-Line# 9: Syntax error_no at declaration list of variable declaration list
-Line# 9: Syntax error_no at declaration list of variable declaration list
-Error at line 10: syntax error
-
-Line# 18 : Undeclared function var
+Line# 52 : Undeclared function printf

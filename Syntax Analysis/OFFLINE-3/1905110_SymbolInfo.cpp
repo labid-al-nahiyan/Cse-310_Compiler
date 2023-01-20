@@ -87,7 +87,12 @@ int SymbolInfo::get_start(){
 int SymbolInfo::get_end(){
     return SymbolInfo::endline;
 }
-
+string SymbolInfo::get_value(){
+    return SymbolInfo::value;
+}
+void SymbolInfo::set_value(string s){
+    SymbolInfo::value +=s;
+}
 void SymbolInfo::printChild(int depth,ofstream &parsetree){
     for(int i=1;i<=depth;i++){
         parsetree<<" ";

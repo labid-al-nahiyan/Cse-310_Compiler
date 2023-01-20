@@ -129,10 +129,7 @@ continue {
 			terminalSymbol("CONTINUE","continue",line_count);
 			return CONTINUE;
 		 }
-printf	 {
-			terminalSymbol("PRINTLN","printf",line_count);
-			return PRINTLN;
-		 }
+
 
 {ADDOP}		{
 			////tokenout<<"<ADDOP, "<<yytext<<">\n";
