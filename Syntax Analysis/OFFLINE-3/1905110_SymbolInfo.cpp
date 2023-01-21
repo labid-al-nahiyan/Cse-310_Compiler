@@ -48,13 +48,13 @@ string SymbolInfo::get_name(){
 string SymbolInfo::get_returnType(){
         return SymbolInfo::returnType;
     }
-vector<SymbolInfo> SymbolInfo::get_param(){
+vector<pair<SymbolInfo,int>> SymbolInfo::get_param(){
         return SymbolInfo::parameters;
     }
-void SymbolInfo::set_param(SymbolInfo param){
-        SymbolInfo::parameters.push_back(param);
-    }
-void SymbolInfo::set_param(vector<SymbolInfo> param){
+// void SymbolInfo::set_param(<pair<SymbolInfo,int>> param){
+//         SymbolInfo::parameters.push_back(param);
+//     }
+void SymbolInfo::set_param(vector<pair<SymbolInfo,int>> param){
         SymbolInfo::parameters = param;
     }
 void SymbolInfo::set_name(string name){

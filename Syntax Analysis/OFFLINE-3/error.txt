@@ -1,1 +1,1 @@
-Line# 52 : Undeclared function printf
+Line# 52: Undeclared function 'printf'

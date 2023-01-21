@@ -1105,7 +1105,7 @@ YY_RULE_SETUP
 #line 185 "1905110_lex.l"
 {
 			//tokenout<<"<NOT, "<<yytext<<">\n";
-			terminalSymbol("NOT","!",line_count);
+			terminalSymbol("LOGICOP","!",line_count);
 			return NOT;
 		}
 	YY_BREAK

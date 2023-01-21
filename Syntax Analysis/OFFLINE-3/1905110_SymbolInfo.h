@@ -9,7 +9,7 @@ class SymbolInfo
 {
 private:
     string name,type,returnType,value="";
-    vector<SymbolInfo> parameters;
+    vector<pair<SymbolInfo,int>> parameters;
     vector<SymbolInfo*>* childList;
     int startline ,endline , arraySize;
     SymbolInfo  *next ;
@@ -24,9 +24,9 @@ public:
     string get_name();
     string get_type();
     string get_returnType();
-    vector<SymbolInfo> get_param();
+    vector<pair<SymbolInfo,int>> get_param();
     void set_param(SymbolInfo);
-    void set_param(vector<SymbolInfo>);
+    void set_param(vector<pair<SymbolInfo,int>>);
     void set_next(SymbolInfo *next);
     void set_child(SymbolInfo *child);
     vector<SymbolInfo*>* get_child();

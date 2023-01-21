@@ -184,7 +184,7 @@ continue {
 
 "!"		{
 			//tokenout<<"<NOT, "<<yytext<<">\n";
-			terminalSymbol("NOT","!",line_count);
+			terminalSymbol("LOGICOP","!",line_count);
 			return NOT;
 		}
 
