@@ -1,2 +1,0 @@
-<ID, __efh_a3_>
-<MULTI LINE STRING, abcdijk>
