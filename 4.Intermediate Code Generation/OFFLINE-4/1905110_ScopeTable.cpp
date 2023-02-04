@@ -66,6 +66,8 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
          ll hash_value = abs(SDBMHash(name)),check = 0;
 
          SymbolInfo *temp = new SymbolInfo(name,type,returnType);
+         this->stackOffset+=2;
+         temp->stackOffset = this->stackOffset;
          
          if(symbolArray[hash_value]==NULL ){
              symbolArray[hash_value] = temp;
@@ -78,8 +80,9 @@ bool ScopeTable::Insert(string name,string type,string returnType,ofstream& logo
                 temp1 = temp1->get_next();
                 count++;
             }
-             temp1->set_next(temp);
-             count++;
+
+            temp1->set_next(temp);
+            count++;
          }
          return 1;
     }

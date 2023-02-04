@@ -14,6 +14,8 @@ private:
     int startline ,endline , arraySize;
     SymbolInfo  *next ;
 public:
+    string code="";
+    int stackOffset = 0;
     SymbolInfo();
     SymbolInfo(string, string );
     SymbolInfo(string, string ,string);

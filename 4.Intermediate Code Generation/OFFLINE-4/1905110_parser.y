@@ -10,6 +10,7 @@ typedef long long ll;
 
 ofstream logout;
 ofstream errout;
+ofstream code;
 ofstream parsetree;
 
 extern int line_count,interal_line,error_no;
@@ -22,13 +23,13 @@ ScopeTable *sc = symTable->EnterScope();
 vector<pair<SymbolInfo,int>> parameter; 
 vector<string> argument;
 vector<SymbolInfo> declaredVar;
-int parameterNum = 0,errorline;
+int parameterNum = 0,errorline,label= 0;
+vector<SymbolInfo>globalVar; //for ICG
 
 int yylex(void);
 
 void yyerror(string s){
 	logout<<"Error at line "<<line_count<<": "<<s<<"\n"<<endl;
-	//errout<<"Error at line "<<line_count<<": "<<s<<"\n"<<endl;
     errorline = line_count;
     error_no++;
 }
@@ -107,6 +108,19 @@ string operationalTypeCast(SymbolInfo *s1, SymbolInfo* s2){
     }
     return c;
 }
+string getAsmRelop(string relop){
+    if(relop==">") return "JG";
+    else if(relop==">=")return "JGE";
+    else if(relop=="<")return "JL";
+    else if(relop=="<=")return "JLE";
+    else if(relop=="==")return "JE";
+    else if(relop=="!=")return "JNE";
+
+}
+string generateLabel(){
+    label++;
+    return "L"+to_string(label);
+}
 
 void functionInsert(string name, string type)
 {
@@ -134,9 +148,7 @@ void functionInsert(string name, string type)
             errout<<"Line# "<<line_count<<": Conflicting types for '"<<s->get_name()<<"'\n";
             error_no++;
         }
-        else{
-        //    errout<<"Line# "<<line_count<<": Redefinition of variable '"<<($2->get_type())<<"'\n";
-        }
+       
     }
 }
 
@@ -177,9 +189,32 @@ start: program
           $$->set_end($1->get_end());
           $$->set_child($1);
 
+          code<<".MODEL SMALL\n.STACK 500H\n.DATA\n\tnumber DB \"00000$\"\n";
+
+          for(auto i:globalVar){
+
+            if(i.get_type()!="ARRAY"){
+                code<<'\t'<<(i.get_name())<<" DW 0\n";
+            }
+            else code<<'\t'<<(i.get_name())<<" DW 0\n";
+
+          }
+
+          code<<".CODE\n";
+
+          $$->code +="\nNEWLINE PROC\n\tPUSH AX\n\tPUSH DX\n\tMOV AH,2\n\tMOV DL,0DH\n\tINT 21h\n\tMOV AH,2\n\tMOV DL,0AH\n\tINT 21h\n\tPOP DX\n\tPOP ax\n\tRET\nNEWLINE ENDP\n\n";
+          $$->code +="printnumber proc  ;print what is in ax\n\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush si\n\tlea si,number\n\tmov bx,10\n\tadd si,4\n\tcmp ax,0\n\tjnge negate\n";
+          $$->code +="print:\n\txor dx,dx\n\tdiv bx\n\tmov [si],dl\n\tadd [si],0\n\tdec si\n\tcmp ax,0\n\tjne print\n\tinc si\n\tlea dx,si\n\tmov ah,9\n\tint 21h\n";
+          $$->code +="pop si\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\tret\n\tnegate:\n\tpush ax\n\tmov ah,2\n\tmov dl,\'-\'\n\tint 21h\n\tpop ax\n\tneg ax\t\njmp print\n\tprintnumber ENDP\n\n";
+          
+          $$->code += $1->code;
+          code<<$$->code;
           $$->printChild(0,parsetree);
+
+          
           
           destroyChild($$);
+
        }
      ;
 program: program unit   
@@ -192,6 +227,8 @@ program: program unit
 
             $$->set_start($1->get_start());
             $$->set_end($2->get_end());
+
+            $$->code += $1->code + $2->code ;
         }
     | unit              
         {
@@ -200,6 +237,9 @@ program: program unit
             $$->set_start($1->get_start());
             $$->set_end($1->get_end());
             $$->set_child($1);
+
+            $$->code += $1->code;
+
         }
     ; 
 unit : var_declaration  
@@ -209,6 +249,9 @@ unit : var_declaration
             $$->set_start($1->get_start());
             $$->set_end($1->get_end());
             $$->set_child($1);
+
+
+            $$->code += $1->code;
         }
     | func_declaration  
         {
@@ -217,6 +260,8 @@ unit : var_declaration
             $$->set_start($1->get_start());
             $$->set_end($1->get_end());
             $$->set_child($1);
+
+            $$->code += $1->code;
         }
     | func_definition   
         {
@@ -225,6 +270,10 @@ unit : var_declaration
             $$->set_start($1->get_start());
             $$->set_end($1->get_end());
             $$->set_child($1);
+
+            $$->code += $1->code;
+
+            
         }
     ;
 
@@ -236,7 +285,6 @@ func_declaration: type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 
                     functionInsert($2->get_type(), $1->get_returnType());
                     
-
                     SymbolInfo *s = symTable->LookUp(($2->get_type()));
                     
                      if(s!=NULL){
@@ -262,9 +310,7 @@ func_declaration: type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
                     functionInsert($2->get_type(), $1->get_returnType());
 
                     logout<<"func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON\n";
-                   // SymbolInfo *s = symTable->LookUp(($1->get_name()));
-                    
-
+                   
                     $$ = new SymbolInfo("func_declaration","type_specifier ID LPAREN RPAREN SEMICOLON");
                     
 
@@ -306,18 +352,34 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInser
                      logout<<"func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement\n";
 
                      $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN parameter_list RPAREN compound_statement");
-                    
-                     
                      $$->set_child($1);
                      $$->set_child($2);
                      $$->set_child($3);
                      $$->set_child($4);
                      $$->set_child($5);
-                    // $$->set_child($6);
                      $$->set_child($7);
 
                      $$->set_start($1->get_start());
                      $$->set_end($7->get_end());
+
+//...............................................................................//
+                     $$->code+=($2->get_type())+"PROC\n";
+                     if(($2->get_type()=="main")){
+                        $$->code+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
+                     }
+
+                     $$->code+="\tPUSH BP\n\tMOV BP,SP\n";
+
+                     $$->code+=$7->code;
+
+                     if(($2->get_type()=="main")){
+                        $$->code+="\tMOV AH, 4CH\n\tINT 21H\n";
+                     }
+                     else{
+                        $$->code+="\tRET\n";
+                     }
+                     $$->code +='\t'+($2->get_type())+" ENDP\nEND "+($2->get_type())+'\n';
+//.............................................................................................//
                      
                   }
                 | type_specifier ID LPAREN RPAREN { functionInsert( $2->get_type(), $1->get_returnType()) ;} compound_statement                 
@@ -326,47 +388,44 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInser
                     
                     
                      SymbolInfo *s = symTable->LookUp(($2->get_type()));
-                    // s->set_param(parameter);
-                    // parameter.clear(); 
+
                      logout<<"func_definition : type_specifier ID LPAREN RPAREN compound_statement\n";     
 
                      $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN RPAREN compound_statement");
                     
                      
-                    // vector<SymbolInfo*>* sI = $1->get_child();
-                    //  for(SymbolInfo* info : *sI ){
-                    //    $$->set_child(info);
-                    //  }
+                  
                      $$->set_child($1);
                      $$->set_child($2);
                      $$->set_child($3);
                      $$->set_child($4);
-                    // $$->set_child($5);
-                     $$->set_child($6);
-
-                     $$->set_start($1->get_start());
-                     $$->set_end($6->get_end());                                     
-                  }
-                | type_specifier ID LPAREN error RPAREN compound_statement
-                
-                 {
-                    
-
-                    errout<<"Line# "<<errorline<<": Syntax error at parameter list of function definition\n";
-
-                    $$ = new SymbolInfo("func_definition","type_specifier ID LPAREN parameter_list RPAREN compound_statement");
-                    
-                     $$->set_child($1);
-                     $$->set_child($2);
-                     $$->set_child($3);
-                     $$->set_child(new SymbolInfo("parameter_list","error",errorline));
-                     $$->set_child($5);
                      $$->set_child($6);
 
                      $$->set_start($1->get_start());
                      $$->set_end($6->get_end());  
+
+//....................................ICG.......................//
+                    
+                     $$->code+=($2->get_type())+" PROC\n";
+                     if(($2->get_type()=="main")){
+                        $$->code+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
+                     }
+
+                     $$->code+="\tPUSH BP\n\tMOV BP,SP\n";
+
+                     $$->code+=$6->code;
+
+                     if(($2->get_type()=="main")){
+                        $$->code+="\tMOV AH, 4CH\n\tINT 21H\n";
+                     }
+                     else{
+                        $$->code+="\tRET\n";
+                     }
+                     $$->code +=($2->get_type())+" ENDP\nEND "+($2->get_type())+'\n';
+
+//...................................................................//                                                       
                   }
-               
+                
                 ;
 
                 
@@ -421,51 +480,15 @@ parameter_list  : parameter_list  COMMA type_specifier ID
                         $$->set_start($1->get_start());
                         $$->set_end($1->get_end());
                     }
-                // | parameter_list error COMMA type_specifier ID{
-                //     $$ = new SymbolInfo("parameter_list","error");
-                //     $$->set_start($1->get_start());
-                //     $$->set_end($1->get_end());
-                // }
-                // | parameter_list error COMMA type_specifier{
-                //     $$ = new SymbolInfo("parameter_list","error");
-                //     $$->set_start($1->get_start());
-                //     $$->set_end($1->get_end());
-                // }
-                // | type_specifier error{
-                //     $$ = new SymbolInfo("parameter_list","error");
-                //     $$->set_start($1->get_start());
-                //     $$->set_end($1->get_end());
-                // }
+           
                 ;
 
-// LCURL_          :   LCURL 
-//                      {
-//                         // symTable->EnterScope();
-//                         // for(auto i: parameter){
 
-//                         //     int x = symTable->Insert(i.get_name(),i.get_type(),i.get_returnType(),logout);
-
-//                         //     if(!x){
-//                         //         errout<<"Line# "<<line_count<<": Redefinition of parameter '"<<i.get_name()<<"'\n";
-//                         //         error_no++;
-//                         //     }
-//                         // }
-
-//                         $$ = new SymbolInfo("","");
-            
-//                         $$->set_child($1);
-
-//                         $$->set_start($1->get_start());
-//                         $$->set_end($1->get_end());
-
-//                      } 
 compound_statement : LCURL {enterScope();}
                      statements 
                      RCURL       
                      {  
-                        logout<<"compound_statement : LCURL statements RCURL\n";  
-                        symTable->PrintAll(logout);
-                        symTable->ExitScope();
+                        logout<<"compound_statement : LCURL statements RCURL\n"; 
 
                         $$ = new SymbolInfo("compound_statement","LCURL statements RCURL");
                         
@@ -475,6 +498,14 @@ compound_statement : LCURL {enterScope();}
 
                         $$->set_start($1->get_start());
                         $$->set_end($4->get_end());
+
+                    //.......ICG.............//
+                        $$->code = $3->code;
+                        $$->code +="\tADD SP,";$$->code+=to_string(symTable->getCurrentScope()->stackOffset)+'\n';
+                    //.......................//
+
+                        symTable->PrintAll(logout);
+                        symTable->ExitScope();
                                                        
                      }
 
@@ -483,71 +514,30 @@ compound_statement : LCURL {enterScope();}
                      {
                         
                         logout<<"compound_statement : LCURL RCURL\n";
-                        symTable->PrintAll(logout);
-                        symTable->ExitScope();
-
+                        
                         $$ = new SymbolInfo("compound_statement","LCURL RCURL");
-
-                        // vector<SymbolInfo*>* sI = $1->get_child();
-                        // for(SymbolInfo* info : *sI ){
-                        //     $$->set_child(info);
-                        // }
 
                         $$->set_child($1);
                         $$->set_child($3);
 
                         $$->set_start($1->get_start());
                         $$->set_end($3->get_end());
+
+                    //.......ICG.............//
+
+                        $$->code +='\t'+"ADD SP,"+to_string(symTable->getCurrentScope()->stackOffset)+'\n';
+                    //.......................//
+
+                        symTable->PrintAll(logout);
+                        symTable->ExitScope();
+                       
+                       
                      }
                 ;
 
 var_declaration : type_specifier declaration_list SEMICOLON 
                 {
                     logout<<"var_declaration : type_specifier declaration_list SEMICOLON\n";
-                    
-                   
-                    for(SymbolInfo info : declaredVar ){
-                        
-                        if($1->get_type()=="VOID"){
-                            errout<<"Line# "<<line_count<<": Variable or field '"<<info.get_name()<<"' declared void\n";
-                            error_no++;
-                        }
-                        
-                        info.set_returnType($1->get_returnType());
-                       
-                        int x = symTable->Insert(info.get_name(), info.get_type(),info.get_returnType(),logout);
-                        
-                        SymbolInfo *s = symTable->LookUpCurrent(info.get_name());
-
-                        if(s->get_type()=="ARRAY"){
-
-                            s->set_arraySize(info.get_arraySize());
-
-                        }
-                       
-
-                        if(!x){
-                            
-
-                            if(info.get_type() != s->get_type() && info.get_returnType() != s->get_returnType() ){
-
-                                errout<<"Line# "<<line_count <<": '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
-                                error_no++;
-                            }
-
-                            else if(info.get_returnType() != s->get_returnType()){
-                                errout<<"Line# "<<line_count<<": Conflicting types for'"<<s->get_name()<<"'\n";
-                                error_no++;
-                            }
-
-                            else{
-                                errout<<"Line# "<<line_count<<": Redefinition of variable '"<<(info.get_name())<<"'\n";
-                                error_no++;
-                            }
-                        }
-                    }
-                    declaredVar.clear();
-
                     $$ = new SymbolInfo("var_declaration","type_specifier declaration_list SEMICOLON");
 
                     $$->set_child($1);
@@ -556,7 +546,53 @@ var_declaration : type_specifier declaration_list SEMICOLON
 
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+                   
+                    for(SymbolInfo info : declaredVar ){
+                        
+                        if($1->get_type()=="VOID"){
+                            errout<<"Line# "<<line_count<<": Variable or field '"<<info.get_name()<<"' declared void\n";
+                            error_no++;
+                        }
+                        info.set_returnType($1->get_returnType());
+                        int x = symTable->Insert(info.get_name(), info.get_type(),info.get_returnType(),logout);
+                        SymbolInfo *s = symTable->LookUpCurrent(info.get_name());
 
+                        if(s->get_type()=="ARRAY"){
+                            s->set_arraySize(info.get_arraySize());
+                        }
+                        //.................ICG............................//
+                        if(symTable->getCurrentScope()->get_id() == 1){
+                            s->stackOffset = 0;
+                            globalVar.push_back(info);
+                        }
+                        else{
+                             
+                            if(s->get_type()=="ARRAY"){
+                                $$->code +="\tSUB SP,"+to_string(s->get_arraySize())+"\n";
+                            }
+                            else{
+                                $$->code +="\tSUB SP,2\n";
+                            }
+                        }
+                       //..............................................................//
+                        if(!x){
+
+                            if(info.get_type() != s->get_type() && info.get_returnType() != s->get_returnType() ){
+                                errout<<"Line# "<<line_count <<": '"<<s->get_name()<<"' redeclared as different kind of symbol "<<"\n";
+                                error_no++;
+                            }
+                            else if(info.get_returnType() != s->get_returnType()){
+                                errout<<"Line# "<<line_count<<": Conflicting types for'"<<s->get_name()<<"'\n";
+                                error_no++;
+                            }
+                            else{
+                                errout<<"Line# "<<line_count<<": Redefinition of variable '"<<(info.get_name())<<"'\n";
+                                error_no++;
+                            }
+                        }
+                    }
+
+                    declaredVar.clear();
                 }
                 ;
 type_specifier  : INT       
@@ -606,6 +642,10 @@ declaration_list: declaration_list COMMA ID
                             $$->set_start($1->get_start());
                             $$->set_end($3->get_end());
 
+                //.................................................//
+
+                            
+
                             
                         }
                 | declaration_list COMMA ID LSQUARE CONST_INT RSQUARE {
@@ -617,9 +657,6 @@ declaration_list: declaration_list COMMA ID
                             declaredVar.push_back(symInfo);
 
 
-                           // $3->set_type("ARRAY");
-                            
-                           // declaredVar->push_back($3);
 
                             $$  = new SymbolInfo("declaration_list","declaration_list COMMA ID LSQUARE CONST_INT RSQUARE");
 
@@ -631,6 +668,8 @@ declaration_list: declaration_list COMMA ID
                             $$->set_child($6);
                             $$->set_start($1->get_start());
                             $$->set_end($6->get_end());
+
+                           
                             
                         }
 
@@ -648,6 +687,7 @@ declaration_list: declaration_list COMMA ID
                             $$->set_start($1->get_start());
                             $$->set_end($1->get_end());
 
+                            
                           
                     }
                 | ID LSQUARE  CONST_INT RSQUARE {
@@ -668,6 +708,8 @@ declaration_list: declaration_list COMMA ID
                            
                             $$->set_start($1->get_start());
                             $$->set_end($4->get_end());
+
+                            
                             
                     }
 
@@ -704,6 +746,10 @@ statements      : statement
                       $$->set_value($1->get_value());
                       $$->set_start($1->get_start());
                       $$->set_end($1->get_end());
+
+                      //..ICG ....
+
+                      $$->code = $1->code;
                   }
                 | statements statement
                  {
@@ -716,6 +762,10 @@ statements      : statement
                       $$->set_value($1->get_value()+$2->get_value());
                       $$->set_start($1->get_start());
                       $$->set_end($2->get_end());
+
+                      //...iCG....
+
+                      $$->code += $1->code + $2->code;
                   }
                 ;
 
@@ -731,6 +781,9 @@ statement       : var_declaration
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.....iCG...//
+                    $$->code = $1->code;
                   }
                 | expression_statement                                                               
                   {
@@ -742,6 +795,9 @@ statement       : var_declaration
                       $$->set_value($1->get_value());
                       $$->set_start($1->get_start());
                       $$->set_end($1->get_end());
+
+                      //.......ICG
+                     $$->code = $1->code;
                   }
                 | compound_statement                                                                 
                   {
@@ -754,6 +810,9 @@ statement       : var_declaration
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.......ICG
+                    $$->code = $1->code;
                     
                   }
                 | FOR LPAREN expression_statement expression_statement expression RPAREN statement   
@@ -822,21 +881,34 @@ statement       : var_declaration
                     $$->set_start($1->get_start());
                     $$->set_end($5->get_end());
                   }
-                // | PRINTLN LPAREN ID RPAREN SEMICOLON                                                 
-                //   { 
-                //     logout<<"statement : PRINTLN LPAREN ID RPAREN SEMICOLON\n";
-                //     $$ = new SymbolInfo("statement","PRINTLN LPAREN ID RPAREN SEMICOLON");
+                | PRINTLN LPAREN ID RPAREN SEMICOLON                                                 
+                  { 
+                    logout<<"statement : PRINTLN LPAREN ID RPAREN SEMICOLON\n";
+                    $$ = new SymbolInfo("statement","PRINTLN LPAREN ID RPAREN SEMICOLON");
                       
-                //     $$->set_child($1);
-                //     $$->set_child($2);
-                //     $$->set_child($3);
-                //     $$->set_child($4);
-                //     $$->set_child($5);
+                    $$->set_child($1);
+                    $$->set_child($2);
+                    $$->set_child($3);
+                    $$->set_child($4);
+                    $$->set_child($5);
                     
-                //     $$->set_value($1->get_type()+$2->get_type()+$3->get_type()+$4->get_type());
-                //     $$->set_start($1->get_start());
-                //     $$->set_end($5->get_end());
-                //   }
+                    $$->set_value($1->get_type()+$2->get_type()+$3->get_type()+$4->get_type());
+                    $$->set_start($1->get_start());
+                    $$->set_end($5->get_end());
+
+                    //............ICG
+                    SymbolInfo *s = symTable->LookUp($3->get_type());
+                    
+                    $$->code +=";"+($$->get_value())+'\n';
+                    if((s->stackOffset)==0){
+                        
+                        $$->code += "\tMOV AX,"+(s->get_name())+'\n';
+                    }
+                    else{
+                        $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"]\n";
+                    }
+                    $$->code += "\n\tCALL printnumber\n\tCALL NEWLINE\n";
+                  }
                 | RETURN expression SEMICOLON                                                       
                  {
                     logout<<"statement : RETURN expression SEMICOLON\n";
@@ -876,20 +948,12 @@ expression_statement: SEMICOLON
                         $$->set_value($1->get_value()+$2->get_type());
                         $$->set_start($1->get_start());
                         $$->set_end($2->get_end());
+
+
+                        //.....ICG
+                        $$->code = $1->code;
                     }
-                    | error SEMICOLON {
                     
-                        errout<<"Line# "<<errorline<< ": Syntax error at expression of expression statement\n";
-                        $$ = new SymbolInfo("expression_statement","expression SEMICOLON");
-
-                        $$->set_child(new SymbolInfo("expression","error",errorline));
-
-                        $$->set_child($2);
-
-                        $$->set_start($2->get_start());
-                        $$->set_end($2->get_end());
-                    } 
-                 
                    
                     ;
 
@@ -914,6 +978,19 @@ variable        : ID
                     $$->set_value($1->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //............ICG.............//
+
+                  //  SymbolInfo *s = symTable->LookUp($1->get_type());
+                    
+                    $$->code +=";"+($$->get_value())+'\n';
+                    if((s->stackOffset)==0){
+                        
+                        $$->code += "\tMOV AX,"+(s->get_name())+'\n';
+                    }
+                    else{
+                        $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"]\n";
+                    }
                                                 
                 }
 
@@ -943,6 +1020,21 @@ variable        : ID
                     $$->set_value($1->get_type()+$2->get_type()+$3->get_value()+$4->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($4->get_end());
+
+                    //............ICG.............//
+
+                  //  SymbolInfo *s = symTable->LookUp($1->get_type());
+                    
+                    $$->code +=";"+($$->get_value())+'\n';
+                    if((s->stackOffset)==0){
+                        
+                        $$->code += "\tMOV AX,"+(s->get_name())+'\n';
+                    }
+                    else{
+                        $$->code += "\tPUSH AX\n\tMOV AX ";
+                        string idx = 
+                        $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"-"+to_string(idx)+"]\n";
+                    }
                 }
                 ;
 
@@ -956,6 +1048,11 @@ expression      : logic_expression
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.........ICG
+
+                    $$->code = $1->code;
+
                   }
                 | variable ASSIGNOP logic_expression   
                  {
@@ -964,7 +1061,6 @@ expression      : logic_expression
                     string c = assignTypeCast($1,$3);
 
                     $$ = new SymbolInfo("expression","variable ASSIGNOP logic_expression",c);
-
                                                     
                     $$->set_child($1);
                     $$->set_child($2);
@@ -974,7 +1070,28 @@ expression      : logic_expression
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
 
+                    //........ICG..............//
+
+                    $$->code += ";"+($$->get_value())+'\n';
+                    $$->code += $3->code;
+
+                    vector<SymbolInfo*>* child = $1->get_child();
+
+                    SymbolInfo* id = NULL;
+
+                    for(SymbolInfo* i:*child){
+                        id = i;
+                    }
                     
+                    SymbolInfo *var = symTable->LookUp(id->get_type());  // Find the identifier in scope
+
+                    if(var->stackOffset==0){
+                        $$->code+="\tMOV "+(var->get_name())+", AX\n";
+                    }
+                    else{
+                        $$->code+="\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
+                    }
+
                  }
                 ;
 
@@ -988,6 +1105,9 @@ logic_expression: rel_expression
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.....ICG
+                    $$->code = $1->code;
                  }
                 | rel_expression LOGICOP rel_expression
                  {
@@ -1015,6 +1135,11 @@ rel_expression  : simple_expression
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //........ICG
+
+                    $$->code = $1->code;
+
                 }
                 | simple_expression RELOP simple_expression  
                 {
@@ -1030,6 +1155,25 @@ rel_expression  : simple_expression
                     $$->set_value($1->get_value()+$2->get_type()+$3->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+
+                    //......ICG........
+
+                    $$->code += ";"+$$->get_value()+'\n';
+
+                    $$->code += $1->code; 
+                    $$->code += "\tPUSH AX\n";        // keep $1 value from AX to Dx, then push it to stack. It can be manipulted by $3;
+
+                    $$->code += $3->code; // value in AX;
+                    $$->code += "\tMOV DX, AX\n";
+                    $$->code += "\tPOP AX\n" ; // $1 = AX, $2 = DX;
+
+                    string trueLable = generateLabel(), falseLabel = generateLabel(), generalLabel = generateLabel();
+                    $$->code += "\tCMP AX,DX\n";  
+                    $$->code += "\t"+getAsmRelop($2->get_type())+" "+trueLable+'\n';
+                    $$->code += "\tJMP "+falseLabel+'\n';
+
+                    $$->code += trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
+                    $$->code += falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
                 }
                 
                 ;
@@ -1043,6 +1187,9 @@ simple_expression: term
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.......ICG
+                    $$->code = $1->code;
                 }
                 | simple_expression ADDOP term  
                 {
@@ -1059,6 +1206,17 @@ simple_expression: term
                     $$->set_value($1->get_value()+$2->get_type()+$3->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+
+                    //.......ICG
+                    $$->code += $1->code;
+                    $$->code += "\tMOV DX,AX\n";
+                    $$->code += $3->code;
+
+                    if(($2->get_type())=="+")$$->code+="\tADD ";
+                    else $$->code += "\tSUB ";
+                    $$->code += "DX,AX\n";
+                    
+                    $$->code += "\tPUSH DX\n\tPOP AX ;always keep first part of expression in AX then move it to DX\n";
                 }
                 
                 
@@ -1074,6 +1232,9 @@ term            : unary_expression
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //..........ICG
+                    $$->code = $1->code;
                 }
                 | term MULOP unary_expression   
                 {
@@ -1145,6 +1306,9 @@ unary_expression: ADDOP unary_expression
                     $$->set_value($1->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //............ICG
+                    $$->code = $1->code;
                 }
                 ;
 
@@ -1158,7 +1322,10 @@ factor          : variable
                     $$->set_value($1->get_value());
 
                     $$->set_start($1->get_start());
-                    $$->set_end($1->get_end());           
+                    $$->set_end($1->get_end());      
+
+                    //....ICG
+                    $$->code = $1->code;     
                 }
 
                 | ID LPAREN argument_list RPAREN 
@@ -1203,8 +1370,6 @@ factor          : variable
                     parameterNum = 0;
                   
                     $$ = new SymbolInfo("factor","ID LPAREN argument_list RPAREN",c);
-                    //$$ = new SymbolInfo("factor","ID LPAREN argument_list RPAREN",$1->get_returnType());
-
 
                     $$->set_child($1);
                     $$->set_child($2);
@@ -1214,6 +1379,8 @@ factor          : variable
                     $$->set_value($1->get_type()+$2->get_type()+$3->get_value()+$4->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($4->get_end());
+
+
                 }
 
                 | LPAREN expression RPAREN       
@@ -1228,6 +1395,9 @@ factor          : variable
                     $$->set_value($1->get_type()+$2->get_value()+$3->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+
+                    //.......ICG....//
+                    $$->code += $2->code;
                 }
                 | CONST_INT                      
                 {
@@ -1239,6 +1409,9 @@ factor          : variable
                     $$->set_value($1->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.........ICG.......//
+                    $$->code += "\tMOV AX,"+($1->get_type())+'\n';
                 }
                 | CONST_FLOAT                    
                 {
@@ -1250,6 +1423,9 @@ factor          : variable
                     $$->set_value($1->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($1->get_end());
+
+                    //.........ICG.......//
+                    $$->code += "\tMOV AX,"+($1->get_type())+'\n';
                 }
                 | variable INCOP                 
                 {
@@ -1262,6 +1438,23 @@ factor          : variable
                     $$->set_value($1->get_value()+$2->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($2->get_end());
+
+                    // ... ICG..........//
+                    $$->code +=$1->code;
+                    $$->code +="\tPUSH AX\n\tINC AX\n";
+                    //$$->code += "\tMOV AX,1\n"    dont do this.because its infix increment. m = n++ here m's value will be previous n value.
+                                            //      so we reserve this in stack.
+
+                    SymbolInfo *var = symTable->LookUp($1->get_value());  // Find the identifier in scope
+
+                    if(var->stackOffset==0){
+                        $$->code+="\tMOV "+(var->get_name())+",AX\n";
+                    }
+                    else{
+                        $$->code+="\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
+                    }
+
+	               $$->code +="\tPOP AX\n";
                 }
                 | variable DECOP                 
                 {
@@ -1274,6 +1467,23 @@ factor          : variable
                     $$->set_value($1->get_value()+$2->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($2->get_end());
+
+                    // ... ICG..........//
+                    $$->code +=$1->code;
+                    $$->code +="\tPUSH AX\n\tDEC AX\n";
+                    //$$->code += "\tMOV AX,1\n"    dont do this.because its infix increment. m = n++ here m's value will be previous n value.
+                                            //      so we reserve this in stack.
+
+                    SymbolInfo *var = symTable->LookUp($1->get_value());  // Find the identifier in scope
+
+                    if(var->stackOffset==0){
+                        $$->code+="\tMOV "+(var->get_name())+",AX\n";
+                    }
+                    else{
+                        $$->code+="\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
+                    }
+
+	               $$->code +="\tPOP AX\n";
                 }
                 ;
 
@@ -1342,6 +1552,7 @@ int main(int argc,char *argv[]){
 	logout.open("log.txt");
 	errout.open("error.txt");
     parsetree.open("parse.txt");
+    code.open("code.asm");
 
 	yyin=fp;
 	yyparse();
@@ -1351,9 +1562,11 @@ int main(int argc,char *argv[]){
     logout<<"Total Errors: "<<error_no<<endl;
 
 	fclose(yyin);
+
  	logout.close();
-    
 	errout.close();
     parsetree.close();
+    code.close();
+
 	return 0;
 }

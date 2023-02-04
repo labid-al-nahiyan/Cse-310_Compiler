@@ -15,6 +15,7 @@ private:
     long long  SDBMHash(string str);
 
 public:
+    int stackOffset = 0;
     ScopeTable(long long  num_buckets ,long long  id,  ScopeTable *parent_scope);
     bool Insert(string ,string,string, ofstream&);
     SymbolInfo* LookUp(string);

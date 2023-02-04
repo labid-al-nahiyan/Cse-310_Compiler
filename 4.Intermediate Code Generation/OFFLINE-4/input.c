@@ -1,16 +1,26 @@
-int a, b;
-
-float x, y;
-
-int add_int(int-) {
-    return 5;
-}
-
-int main() {
-    int p-q, r;
-
-    a = 2 + = 4;
-    x = 2.3;
-
-    return 0;
+int i,j;
+int main(){
+ 
+	int k,ll,m,n,o,p;
+ 
+	i = 1;
+	println(i);
+	j = 5 + 8;
+	println(j);
+	k = i + j;
+	println(k);
+ 
+	n = m++;
+	println(n);
+ 
+	o = i ;
+	println(o);
+ 
+	p = n == o;
+	println(p);
+ 
+	p = n < o;
+	println(p);
+	
+	return 0;
 }

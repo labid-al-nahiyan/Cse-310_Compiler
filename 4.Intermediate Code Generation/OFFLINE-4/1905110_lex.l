@@ -131,6 +131,7 @@ continue {
 		 }
 
 
+
 {ADDOP}		{
 			////tokenout<<"<ADDOP, "<<yytext<<">\n";
 			
@@ -237,7 +238,15 @@ continue {
 			terminalSymbol("SEMICOLON",";",line_count);
 			return SEMICOLON;
 		}
-		
+"println" {
+				
+				
+				//tokenout<<"<CONST_INT, "<<yytext<<">\n";
+				
+				terminalSymbol("PRINTLN",yytext,line_count);
+
+				return PRINTLN;
+			}
 {DIGITS} {
 				
 				
