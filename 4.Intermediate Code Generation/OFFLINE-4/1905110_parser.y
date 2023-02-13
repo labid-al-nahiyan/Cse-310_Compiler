@@ -33,7 +33,6 @@ void yyerror(string s){
     errorline = line_count;
     error_no++;
 }
-
 void freeVector(vector<SymbolInfo*>*symInfo){
     for(SymbolInfo* info: *symInfo){
 		delete info;
@@ -47,7 +46,6 @@ void destroyChild(SymbolInfo* parent){
     }
     delete parent->get_child();
 }
-
 string assignTypeCast(SymbolInfo *s1, SymbolInfo* s2){
     string a = s1->get_returnType();
     string b = s2->get_returnType();
@@ -121,7 +119,6 @@ string generateLabel(){
     label++;
     return "L"+to_string(label);
 }
-
 void functionInsert(string name, string type)
 {
     int x = symTable->Insert(name,"FUNCTION",type,logout);
@@ -150,8 +147,19 @@ void functionInsert(string name, string type)
         }
        
     }
+    
 }
+void functionDefinitionFly(string name){
+    //.............ICG......
+    string onTheFly = name+" PROC\n";
+    
+    if(name == "main"){
+        onTheFly+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
+    }
 
+    onTheFly+="\tPUSH BP\n\tMOV BP,SP\n";
+    code<<onTheFly;
+}
 void enterScope(){
     symTable->EnterScope();
     for(auto i: parameter){
@@ -202,18 +210,25 @@ start: program
 
           code<<".CODE\n";
 
-          $$->code +="\nNEWLINE PROC\n\tPUSH AX\n\tPUSH DX\n\tMOV AH,2\n\tMOV DL,0DH\n\tINT 21h\n\tMOV AH,2\n\tMOV DL,0AH\n\tINT 21h\n\tPOP DX\n\tPOP ax\n\tRET\nNEWLINE ENDP\n\n";
-          $$->code +="printnumber proc  ;print what is in ax\n\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush si\n\tlea si,number\n\tmov bx,10\n\tadd si,4\n\tcmp ax,0\n\tjnge negate\n";
-          $$->code +="print:\n\txor dx,dx\n\tdiv bx\n\tmov [si],dl\n\tadd [si],0\n\tdec si\n\tcmp ax,0\n\tjne print\n\tinc si\n\tlea dx,si\n\tmov ah,9\n\tint 21h\n";
-          $$->code +="pop si\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\tret\n\tnegate:\n\tpush ax\n\tmov ah,2\n\tmov dl,\'-\'\n\tint 21h\n\tpop ax\n\tneg ax\t\njmp print\n\tprintnumber ENDP\n\n";
-          
-          $$->code += $1->code;
-          code<<$$->code;
-          $$->printChild(0,parsetree);
+         $$->code +="\nNEWLINE PROC\n\tPUSH AX\n\tPUSH DX\n\tMOV AH,2\n\tMOV DL,0DH\n\tINT 21h\n\tMOV AH,2\n\tMOV DL,0AH\n\tINT 21h\n\tPOP DX\n\tPOP ax\n\tRET\nNEWLINE ENDP\n\n";
+        code<<"\nNEWLINE PROC\n\tPUSH AX\n\tPUSH DX\n\tMOV AH,2\n\tMOV DL,0DH\n\tINT 21h\n\tMOV AH,2\n\tMOV DL,0AH\n\tINT 21h\n\tPOP DX\n\tPOP ax\n\tRET\nNEWLINE ENDP\n\n"; 
+         $$->code +="printnumber proc  ;print what is in ax\n\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush si\n\tlea si,number\n\tmov bx,10\n\tadd si,4\n\tcmp ax,0\n\tjnge negate\n";
+        code<<"printnumber proc  ;print what is in ax\n\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush si\n";
+        code<<"\tmov CX,0\n\tmov DX,0\n\tlabel1:\n\tcmp ax,0\n\tje print1\n";
+         $$->code +="print:\n\txor dx,dx\n\tdiv bx\n\tmov [si],dl\n\tadd [si],0\n\tdec si\n\tcmp ax,0\n\tjne print\n\tinc si\n\tlea dx,si\n\tmov ah,9\n\tint 21h\n";
+        code<<"\n\t;initialize bx to 10\n\tmov bx,10\n\t;extract last digit\n\tdiv bx\n\t;push it in the stack\n\tpush dx\n\t;inc the count\n\tinc cx\n\t;set dx to 0\n\txor dx,dx\n\tjmp label1\n";
+        code<<"\n\tprint1:\n\t;check if count is greater than zero\n\tcmp cx,0\n\tje exit\n\t;pop the top of stack\n\tpop dx\n\t;add 48 to represent the ascii\n\tadd dx,48\n\t;print a char";
+        code<<"\n\tmov ah,02h\n\tint 21h\n\tdec cx\n\tjmp print1";
+        code<<"\n\texit:\n\tpop si\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\tret\nprintnumber ENDP\n\n";
+        
+
+        $$->code += $1->code;
+      //  code<<$$->code;
+        $$->printChild(0,parsetree);
 
           
           
-          destroyChild($$);
+        destroyChild($$);
 
        }
      ;
@@ -341,7 +356,7 @@ func_declaration: type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
                     $$->set_end($6->get_end());  
                 }
                 ;
-func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInsert( $2->get_type(), $1->get_returnType()) ;} compound_statement 
+func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInsert( $2->get_type(), $1->get_returnType());functionDefinitionFly($2->get_type());} compound_statement 
                   {
                      SymbolInfo *s = symTable->LookUp(($2->get_type()));
                     
@@ -362,27 +377,35 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInser
                      $$->set_start($1->get_start());
                      $$->set_end($7->get_end());
 
-//...............................................................................//
-                     $$->code+=($2->get_type())+"PROC\n";
-                     if(($2->get_type()=="main")){
-                        $$->code+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
-                     }
+//.......................................ICG....................................//
+                    //  $$->code+=($2->get_type())+"PROC\n";
+                    //  string onTheFly = ($2->get_type())+"PROC\n";
+                    // // code<<onTheFly;
 
-                     $$->code+="\tPUSH BP\n\tMOV BP,SP\n";
+                    //  if(($2->get_type()=="main")){
+                    //     $$->code+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
+                    //  }
+
+                    //  $$->code+="\tPUSH BP\n\tMOV BP,SP\n";
 
                      $$->code+=$7->code;
-
+                     
+                     string onTheFly;
                      if(($2->get_type()=="main")){
                         $$->code+="\tMOV AH, 4CH\n\tINT 21H\n";
+                        onTheFly = "\tMOV AH, 4CH\n\tINT 21H\n";
                      }
                      else{
                         $$->code+="\tRET\n";
+                        onTheFly = "\tRET\n";
                      }
                      $$->code +='\t'+($2->get_type())+" ENDP\nEND "+($2->get_type())+'\n';
+                     onTheFly+= '\t'+($2->get_type())+" ENDP\nEND "+($2->get_type())+'\n';
+                     code<<onTheFly;
 //.............................................................................................//
                      
                   }
-                | type_specifier ID LPAREN RPAREN { functionInsert( $2->get_type(), $1->get_returnType()) ;} compound_statement                 
+                | type_specifier ID LPAREN RPAREN { functionInsert( $2->get_type(), $1->get_returnType());functionDefinitionFly($2->get_type());} compound_statement                 
                   {  
 
                     
@@ -406,22 +429,27 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInser
 
 //....................................ICG.......................//
                     
-                     $$->code+=($2->get_type())+" PROC\n";
-                     if(($2->get_type()=="main")){
-                        $$->code+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
-                     }
+                    //  $$->code+=($2->get_type())+" PROC\n";
+                    //  if(($2->get_type()=="main")){
+                    //     $$->code+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
+                    //  }
 
-                     $$->code+="\tPUSH BP\n\tMOV BP,SP\n";
+                    //  $$->code+="\tPUSH BP\n\tMOV BP,SP\n";
 
                      $$->code+=$6->code;
-
+                     
+                     string onTheFly ;
                      if(($2->get_type()=="main")){
                         $$->code+="\tMOV AH, 4CH\n\tINT 21H\n";
+                        onTheFly = "\tMOV AH, 4CH\n\tINT 21H\n";
                      }
                      else{
                         $$->code+="\tRET\n";
+                        onTheFly = "\tRET\n";
                      }
                      $$->code +=($2->get_type())+" ENDP\nEND "+($2->get_type())+'\n';
+                     onTheFly+= ($2->get_type())+" ENDP\nEND "+($2->get_type())+'\n';
+                     code<<onTheFly;
 
 //...................................................................//                                                       
                   }
@@ -502,6 +530,9 @@ compound_statement : LCURL {enterScope();}
                     //.......ICG.............//
                         $$->code = $3->code;
                         $$->code +="\tADD SP,";$$->code+=to_string(symTable->getCurrentScope()->stackOffset)+'\n';
+                        string onTheFly = "\tADD SP,"+to_string(symTable->getCurrentScope()->stackOffset)+'\n';
+                        code<<onTheFly;
+                        
                     //.......................//
 
                         symTable->PrintAll(logout);
@@ -526,6 +557,8 @@ compound_statement : LCURL {enterScope();}
                     //.......ICG.............//
 
                         $$->code +='\t'+"ADD SP,"+to_string(symTable->getCurrentScope()->stackOffset)+'\n';
+                        string onTheFly = '\t'+"ADD SP,"+to_string(symTable->getCurrentScope()->stackOffset)+'\n';
+                        code<<onTheFly;
                     //.......................//
 
                         symTable->PrintAll(logout);
@@ -566,12 +599,15 @@ var_declaration : type_specifier declaration_list SEMICOLON
                             globalVar.push_back(info);
                         }
                         else{
-                             
+                            string onTheFly;
                             if(s->get_type()=="ARRAY"){
                                 $$->code +="\tSUB SP,"+to_string(s->get_arraySize())+"\n";
+                                onTheFly = "\tSUB SP,"+to_string(s->get_arraySize())+"\n";
+                                code<<onTheFly;
                             }
                             else{
                                 $$->code +="\tSUB SP,2\n";
+                                code<<"\tSUB SP,2\n";
                             }
                         }
                        //..............................................................//
@@ -712,24 +748,6 @@ declaration_list: declaration_list COMMA ID
                             
                             
                     }
-
-                | declaration_list error COMMA ID{
-                    $$  = new SymbolInfo("declaration_list","error",errorline);
-                    errout<<"Line# "<<errorline<<": Syntax error at declaration list of variable declaration\n";
-                }
-                | declaration_list error COMMA ID LSQUARE CONST_INT RSQUARE{
-                    $$  = new SymbolInfo("declaration_list","error",errorline);
-                    errout<<"Line# "<<errorline<<": Syntax error at declaration list of variable declaration\n";
-                }
-                
-                | ID LSQUARE CONST_FLOAT RSQUARE{
-                    $$  = new SymbolInfo("declaration_list","error",errorline);
-                    errout<<"Line# "<<errorline<<": ARRAY Index have to be integer\n";
-                }
-                | declaration_list COMMA ID LSQUARE CONST_FLOAT RSQUARE{
-                    $$  = new SymbolInfo("declaration_list","error",errorline);
-                    errout<<"Line# "<<errorline<<": ARRAY Index have to be integer\n";
-                }
 
                 ;
 
@@ -900,14 +918,24 @@ statement       : var_declaration
                     SymbolInfo *s = symTable->LookUp($3->get_type());
                     
                     $$->code +=";"+($$->get_value())+'\n';
+                    $$->code += "\tPUSH AX"+'\n';
+                    code<<"\tPUSH AX\n";
+                    string onTheFly;
                     if((s->stackOffset)==0){
                         
                         $$->code += "\tMOV AX,"+(s->get_name())+'\n';
+                        onTheFly = "\tMOV AX,"+(s->get_name())+'\n';
                     }
                     else{
                         $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"]\n";
+                        onTheFly = "\tMOV AX,[BP-"+to_string(s->stackOffset)+"]\n";
                     }
+                    code<<onTheFly;
                     $$->code += "\n\tCALL printnumber\n\tCALL NEWLINE\n";
+                    onTheFly = "\n\tCALL printnumber\n\tCALL NEWLINE\n";
+                    code<<onTheFly;
+                    $$->code += "\tPOP AX"+'\n';
+                    code<<"\tPOP AX\n";
                   }
                 | RETURN expression SEMICOLON                                                       
                  {
@@ -984,12 +1012,17 @@ variable        : ID
                   //  SymbolInfo *s = symTable->LookUp($1->get_type());
                     
                     $$->code +=";"+($$->get_value())+'\n';
+                    
                     if((s->stackOffset)==0){
                         
                         $$->code += "\tMOV AX,"+(s->get_name())+'\n';
+                        string onTheFly = "\tMOV AX,"+(s->get_name())+'\n';
+                        code<<onTheFly;
                     }
                     else{
                         $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"]\n";
+                        string onTheFly = "\tMOV AX,[BP-"+to_string(s->stackOffset)+"]\n";
+                        code<<onTheFly;
                     }
                                                 
                 }
@@ -1024,16 +1057,18 @@ variable        : ID
                     //............ICG.............//
 
                   //  SymbolInfo *s = symTable->LookUp($1->get_type());
-                    
+                    string onTheFly;
                     $$->code +=";"+($$->get_value())+'\n';
                     if((s->stackOffset)==0){
                         
                         $$->code += "\tMOV AX,"+(s->get_name())+'\n';
+                        onTheFly = "\tMOV AX,"+(s->get_name())+'\n';
+                        code<<onTheFly;
                     }
                     else{
-                        $$->code += "\tPUSH AX\n\tMOV AX ";
-                        string idx = 
-                        $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"-"+to_string(idx)+"]\n";
+                       // $$->code += "\tPUSH AX\n\tMOV AX ";
+                      //  string idx = 
+                      //  $$->code += "\tMOV AX,[BP-"+to_string(s->stackOffset)+"-"+to_string(idx)+"]\n";
                     }
                 }
                 ;
@@ -1085,12 +1120,16 @@ expression      : logic_expression
                     
                     SymbolInfo *var = symTable->LookUp(id->get_type());  // Find the identifier in scope
 
+                    string onTheFly ;
                     if(var->stackOffset==0){
                         $$->code+="\tMOV "+(var->get_name())+", AX\n";
+                        onTheFly = "\tMOV "+(var->get_name())+", AX\n";
                     }
                     else{
                         $$->code+="\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
+                        onTheFly = "\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
                     }
+                    code<<onTheFly;
 
                  }
                 ;
@@ -1141,20 +1180,19 @@ rel_expression  : simple_expression
                     $$->code = $1->code;
 
                 }
-                | simple_expression RELOP simple_expression  
+                | simple_expression {code<<"\tPUSH AX\n";} RELOP simple_expression  
                 {
                     logout<<"rel_expression : simple_expression RELOP simple_expression\n";
 
-                    
                     $$ = new SymbolInfo("rel_expression","simple_expression RELOP simple_expression","INT");
                                                     
                     $$->set_child($1);
-                    $$->set_child($2);
                     $$->set_child($3);
+                    $$->set_child($4);
 
-                    $$->set_value($1->get_value()+$2->get_type()+$3->get_value());
+                    $$->set_value($1->get_value()+$3->get_type()+$4->get_value());
                     $$->set_start($1->get_start());
-                    $$->set_end($3->get_end());
+                    $$->set_end($4->get_end());
 
                     //......ICG........
 
@@ -1165,15 +1203,27 @@ rel_expression  : simple_expression
 
                     $$->code += $3->code; // value in AX;
                     $$->code += "\tMOV DX, AX\n";
+                    string onTheFly = "\tMOV DX, AX\n";
+                    code<<"\tMOV DX, AX\n";
                     $$->code += "\tPOP AX\n" ; // $1 = AX, $2 = DX;
+                    code<<"\tPOP AX\n"; 
 
                     string trueLable = generateLabel(), falseLabel = generateLabel(), generalLabel = generateLabel();
                     $$->code += "\tCMP AX,DX\n";  
-                    $$->code += "\t"+getAsmRelop($2->get_type())+" "+trueLable+'\n';
+                    code<<"\tCMP AX,DX\n";
+                    $$->code += "\t"+getAsmRelop($3->get_type())+" "+trueLable+'\n';
+                    onTheFly = "\t"+getAsmRelop($3->get_type())+" "+trueLable+'\n';
+                    code<<onTheFly;
                     $$->code += "\tJMP "+falseLabel+'\n';
+                    onTheFly = "\tJMP "+falseLabel+'\n';
+                    code<<onTheFly;
 
                     $$->code += trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
+                    onTheFly = trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
+                    code<<onTheFly;
                     $$->code += falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
+                    onTheFly = falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
+                    code<<onTheFly;
                 }
                 
                 ;
@@ -1191,32 +1241,40 @@ simple_expression: term
                     //.......ICG
                     $$->code = $1->code;
                 }
-                | simple_expression ADDOP term  
+                | simple_expression {code<<"\tMOV DX,AX\n";} ADDOP term  
                 {
                     logout<<"simple_expression : simple_expression ADDOP term\n";
 
-                    string c = operationalTypeCast($1,$3);
+                    string c = operationalTypeCast($1,$4);
                     
                     $$ = new SymbolInfo("simple_expression","simple_expression ADDOP term",c);
                                                     
                     $$->set_child($1);
-                    $$->set_child($2);
                     $$->set_child($3);
+                    $$->set_child($4);
 
-                    $$->set_value($1->get_value()+$2->get_type()+$3->get_value());
+                    $$->set_value($1->get_value()+$3->get_type()+$4->get_value());
                     $$->set_start($1->get_start());
-                    $$->set_end($3->get_end());
+                    $$->set_end($4->get_end());
 
                     //.......ICG
                     $$->code += $1->code;
                     $$->code += "\tMOV DX,AX\n";
-                    $$->code += $3->code;
+                    $$->code += $4->code;
 
-                    if(($2->get_type())=="+")$$->code+="\tADD ";
-                    else $$->code += "\tSUB ";
+                    if(($3->get_type())=="+"){
+                        $$->code+="\tADD ";
+                        code<<"\tADD ";
+                    }
+                    else{
+                         $$->code += "\tSUB ";
+                         code<<"\tSUB ";
+                    }
                     $$->code += "DX,AX\n";
+                    code<<"DX,AX\n";
                     
                     $$->code += "\tPUSH DX\n\tPOP AX ;always keep first part of expression in AX then move it to DX\n";
+                    code<<"\tPUSH DX\n\tPOP AX ;always keep first part of expression in AX then move it to DX\n";
                 }
                 
                 
@@ -1296,6 +1354,26 @@ unary_expression: ADDOP unary_expression
                     $$->set_value("!"+$2->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($2->get_end());
+
+                    //.....IGC
+                    $$->code +="MOV CX,AX\n";
+                    code<<"MOV CX,AX\n";
+                    string trueLable = generateLabel(),endLabel = generateLabel();
+                    $$->code +="JCXZ "+trueLable+'\n';
+                    string onTheFly = "JCXZ "+trueLable+'\n';
+                    code<<onTheFly;
+                    $$->code +="MOV AX,0\nJMP "+endLabel+"\n";
+                    onTheFly = "MOV AX,0\nJMP "+endLabel+"\n";
+                    code<<onTheFly;
+                    $$->code +=trueLable+":\n";
+                    onTheFly = trueLable+":\n";
+                    code<<onTheFly;
+                    $$->code +="MOV AX,1\n";
+                    onTheFly ="MOV AX,1\n";
+                    code<<onTheFly;
+                    $$->code +=endLabel+":\n";
+                    onTheFly = endLabel+":\n";
+                    code<<onTheFly;
                 }
                 | factor                        
                 { 
@@ -1308,7 +1386,7 @@ unary_expression: ADDOP unary_expression
                     $$->set_end($1->get_end());
 
                     //............ICG
-                    $$->code = $1->code;
+                    $$->code = $1->code ;
                 }
                 ;
 
@@ -1412,6 +1490,8 @@ factor          : variable
 
                     //.........ICG.......//
                     $$->code += "\tMOV AX,"+($1->get_type())+'\n';
+                    string onTheFly = "\tMOV AX,"+($1->get_type())+'\n';
+                    code<<onTheFly;
                 }
                 | CONST_FLOAT                    
                 {
@@ -1426,6 +1506,8 @@ factor          : variable
 
                     //.........ICG.......//
                     $$->code += "\tMOV AX,"+($1->get_type())+'\n';
+                    string onTheFly = "\tMOV AX,"+($1->get_type())+'\n';
+                    code<<onTheFly;
                 }
                 | variable INCOP                 
                 {
@@ -1442,19 +1524,25 @@ factor          : variable
                     // ... ICG..........//
                     $$->code +=$1->code;
                     $$->code +="\tPUSH AX\n\tINC AX\n";
-                    //$$->code += "\tMOV AX,1\n"    dont do this.because its infix increment. m = n++ here m's value will be previous n value.
+                    string onTheFly = "\tPUSH AX\n\tINC AX\n";
+                    code<<onTheFly;
+                    //$$->code += "\tADD AX,1\n"    dont do this.because its infix increment. m = n++ here m's value will be previous n value.
                                             //      so we reserve this in stack.
 
                     SymbolInfo *var = symTable->LookUp($1->get_value());  // Find the identifier in scope
 
+
                     if(var->stackOffset==0){
                         $$->code+="\tMOV "+(var->get_name())+",AX\n";
+                        onTheFly = "\tMOV "+(var->get_name())+",AX\n";
                     }
                     else{
                         $$->code+="\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
+                        onTheFly = "\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
                     }
-
-	               $$->code +="\tPOP AX\n";
+                    code<<onTheFly;
+	                $$->code +="\tPOP AX\n";
+                    code<<"\tPOP AX\n";
                 }
                 | variable DECOP                 
                 {
@@ -1471,19 +1559,25 @@ factor          : variable
                     // ... ICG..........//
                     $$->code +=$1->code;
                     $$->code +="\tPUSH AX\n\tDEC AX\n";
+                    string onTheFly = "\tPUSH AX\n\tDEC AX\n";
+                    code<<onTheFly;
                     //$$->code += "\tMOV AX,1\n"    dont do this.because its infix increment. m = n++ here m's value will be previous n value.
                                             //      so we reserve this in stack.
 
                     SymbolInfo *var = symTable->LookUp($1->get_value());  // Find the identifier in scope
 
+                    
                     if(var->stackOffset==0){
                         $$->code+="\tMOV "+(var->get_name())+",AX\n";
+                        onTheFly = "\tMOV "+(var->get_name())+",AX\n";
                     }
                     else{
                         $$->code+="\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
+                        onTheFly = "\tMOV [BP-"+to_string(var->stackOffset)+"],AX\n";
                     }
-
-	               $$->code +="\tPOP AX\n";
+                    code<<onTheFly;
+	                $$->code +="\tPOP AX\n";
+                    code<<"\tPOP AX\n";
                 }
                 ;
 

@@ -2,12 +2,13 @@ int i,j;
 int main(){
  
 	int k,ll,m,n,o,p;
- 
+
+
 	i = 1;
 	println(i);
 	j = 5 + 8;
 	println(j);
-	k = i + j;
+	k = i + j+o;
 	println(k);
  
 	n = m++;
