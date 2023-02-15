@@ -14,7 +14,7 @@
 # echo 'All ready, running'
 # #./1905110 input.txt
 
-yacc -d -y 1905110_parser.y #-Wcounterexamples
+yacc -d -y -v 1905110_parser.y #-Wcounterexamples
 #echo 'Generated the parser C file as well the header file'
 g++ -w -c -o y.o y.tab.c
 #echo 'Generated the parser object file'

@@ -3,25 +3,13 @@ int main(){
  
 	int k,ll,m,n,o,p;
 
+	k=0;
+	while(k<10){
+		println(k);
+		for(m=0;m<5;m++){
+			println(m);
+		}
+		k++;
 
-	i = 1;
-	println(i);
-	j = 5 + 8;
-	println(j);
-	k = i + j+o;
-	println(k);
- 
-	n = m++;
-	println(n);
- 
-	o = i ;
-	println(o);
- 
-	p = n == o;
-	println(p);
- 
-	p = n < o;
-	println(p);
-	
-	return 0;
+	}
 }

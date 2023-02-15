@@ -157,7 +157,7 @@ void functionDefinitionFly(string name){
         onTheFly+="\tMOV AX,@DATA\n\tMOV DS,AX\n";
     }
 
-    onTheFly+="\tPUSH BP\n\tMOV BP,SP\n";
+    onTheFly+="\tPUSH BP\n\tPUSH AX\n\tPUSH DX\n\tPUSH CX\n\tMOV BP,SP\n";
     code<<onTheFly;
 }
 void enterScope(){
@@ -391,6 +391,9 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInser
                      $$->code+=$7->code;
                      
                      string onTheFly;
+                     
+                     code<<"\n\tPOP CX\n\tPOP DX\n\tPOP AX\n\tPOP BP\n\t";
+
                      if(($2->get_type()=="main")){
                         $$->code+="\tMOV AH, 4CH\n\tINT 21H\n";
                         onTheFly = "\tMOV AH, 4CH\n\tINT 21H\n";
@@ -439,6 +442,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN { functionInser
                      $$->code+=$6->code;
                      
                      string onTheFly ;
+                     code<<"\n\tPOP CX\n\tPOP DX\n\tPOP AX\n\tPOP BP\n\t";
                      if(($2->get_type()=="main")){
                         $$->code+="\tMOV AH, 4CH\n\tINT 21H\n";
                         onTheFly = "\tMOV AH, 4CH\n\tINT 21H\n";
@@ -833,7 +837,23 @@ statement       : var_declaration
                     $$->code = $1->code;
                     
                   }
-                | FOR LPAREN expression_statement expression_statement expression RPAREN statement   
+                | FOR LPAREN expression_statement {
+
+                    string label1 = generateLabel();
+                    string label2 = generateLabel();
+                    $1->trueLabel = label1;
+                    $1->falseLabel = label2;
+
+                    code<<"\n\t"<<label1<<": \n";
+
+                  } expression_statement{
+                    code<<"\nJMP "<<($5->falseLabel)<<'\n';
+                    code<<"\n\t"<<($1->falseLabel)<<":\n";
+                  } expression{
+                    code<<"\n\tJMP "<<($1->trueLabel)<<'\n';
+                  } RPAREN{
+                    code<<($5->trueLabel)<<": \n";
+                  } statement   
                   {
                     logout<<"statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement \n";
                     
@@ -842,15 +862,20 @@ statement       : var_declaration
                     $$->set_child($1);
                     $$->set_child($2);
                     $$->set_child($3);
-                    $$->set_child($4);
                     $$->set_child($5);
-                    $$->set_child($6);
                     $$->set_child($7);
+                    $$->set_child($9);
+                    $$->set_child($11);
 
-                    $$->set_value($1->get_type()+$2->get_type()+$3->get_value()+$4->get_value()+$5->get_value()+$6->get_type()+$7->get_value());
+                    $$->set_value($1->get_type()+$2->get_type()+$3->get_value()+$5->get_value()+$7->get_value()+$9->get_type()+$11->get_value());
                       
                     $$->set_start($1->get_start());
-                    $$->set_end($7->get_end()); 
+                    $$->set_end($11->get_end()); 
+
+                    //.........ICG...........
+                    code<<"JMP "+($1->falseLabel)<<'\n';
+                    code<<"\t\n"<<($5->falseLabel)<<":\n";
+
                   }
                 | IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE                                         
                   {
@@ -867,7 +892,7 @@ statement       : var_declaration
                     $$->set_start($1->get_start());
                     $$->set_end($5->get_end());
                   }
-                | IF LPAREN expression RPAREN statement ELSE statement                               
+                | IF LPAREN expression  RPAREN  statement ELSE statement                               
                   { 
                     logout<<"statement : IF LPAREN expression RPAREN statement ELSE statement\n";
                     $$ = new SymbolInfo("statement","IF LPAREN expression RPAREN statement ELSE statement");
@@ -884,20 +909,32 @@ statement       : var_declaration
                     $$->set_start($1->get_start());
                     $$->set_end($7->get_end());
                   }
-                | WHILE LPAREN expression RPAREN statement                                           
+                | WHILE LPAREN{
+                    string label = generateLabel();
+                    $2->trueLabel= label;
+                    code<<"\n\t"<<(label)<<":\n";
+                  } expression RPAREN{
+                    code<<"\n"<<"JMP "<<($4->falseLabel)<<'\n';
+                    code<<"\n\t"<<($4->trueLabel)<<":\n";
+                    
+                  }statement                                           
                   { 
                     logout<<"statement : WHILE LPAREN expression RPAREN statement\n";
                     $$ = new SymbolInfo("statement","WHILE LPAREN expression RPAREN statement");
                       
                     $$->set_child($1);
                     $$->set_child($2);
-                    $$->set_child($3);
                     $$->set_child($4);
                     $$->set_child($5);
+                    $$->set_child($7);
                       
-                    $$->set_value($1->get_type()+$2->get_type()+$3->get_value()+$4->get_type()+$5->get_value());
+                    $$->set_value($1->get_type()+$2->get_type()+$4->get_value()+$5->get_value()+$7->get_value());
                     $$->set_start($1->get_start());
-                    $$->set_end($5->get_end());
+                    $$->set_end($7->get_end());
+
+                    //.......ICG
+                    code<<"\n\t JMP "+($2->trueLabel)<<'\n';
+                    code<<($4->falseLabel)<<":\n";
                   }
                 | PRINTLN LPAREN ID RPAREN SEMICOLON                                                 
                   { 
@@ -951,6 +988,8 @@ statement       : var_declaration
                     $$->set_value($1->get_type()+$2->get_value()+$3->get_type());
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+
+                    //.......ICG
                  }
                 ;
 
@@ -980,6 +1019,8 @@ expression_statement: SEMICOLON
 
                         //.....ICG
                         $$->code = $1->code;
+                        $$->trueLabel = $1->trueLabel;
+                        $$->falseLabel = $1->falseLabel;
                     }
                     
                    
@@ -1087,6 +1128,8 @@ expression      : logic_expression
                     //.........ICG
 
                     $$->code = $1->code;
+                    $$->trueLabel = $1->trueLabel;
+                    $$->falseLabel = $1->falseLabel;
 
                   }
                 | variable ASSIGNOP logic_expression   
@@ -1131,6 +1174,8 @@ expression      : logic_expression
                     }
                     code<<onTheFly;
 
+                    $$->trueLabel = $3->trueLabel;
+                    $$->falseLabel = $3->falseLabel;
                  }
                 ;
 
@@ -1147,6 +1192,8 @@ logic_expression: rel_expression
 
                     //.....ICG
                     $$->code = $1->code;
+                    $$->trueLabel = $1->trueLabel;
+                    $$->falseLabel = $1->falseLabel;
                  }
                 | rel_expression LOGICOP rel_expression
                  {
@@ -1161,6 +1208,7 @@ logic_expression: rel_expression
                     $$->set_value($1->get_value()+$2->get_type()+$3->get_value());
                     $$->set_start($1->get_start());
                     $$->set_end($3->get_end());
+
                  }
                 ;
 
@@ -1178,6 +1226,8 @@ rel_expression  : simple_expression
                     //........ICG
 
                     $$->code = $1->code;
+                    $$->trueLabel = $1->trueLabel;
+                    $$->falseLabel = $1->falseLabel;
 
                 }
                 | simple_expression {code<<"\tPUSH AX\n";} RELOP simple_expression  
@@ -1208,22 +1258,23 @@ rel_expression  : simple_expression
                     $$->code += "\tPOP AX\n" ; // $1 = AX, $2 = DX;
                     code<<"\tPOP AX\n"; 
 
-                    string trueLable = generateLabel(), falseLabel = generateLabel(), generalLabel = generateLabel();
-                    $$->code += "\tCMP AX,DX\n";  
+                    string trueLable = generateLabel(), generalLabel = generateLabel();
+                    $$->trueLabel = trueLable, $$->falseLabel = generalLabel;
+                    //$$->code += "\tCMP AX,DX\n";  
                     code<<"\tCMP AX,DX\n";
-                    $$->code += "\t"+getAsmRelop($3->get_type())+" "+trueLable+'\n';
+                    //$$->code += "\t"+getAsmRelop($3->get_type())+" "+trueLable+'\n';
                     onTheFly = "\t"+getAsmRelop($3->get_type())+" "+trueLable+'\n';
                     code<<onTheFly;
-                    $$->code += "\tJMP "+falseLabel+'\n';
-                    onTheFly = "\tJMP "+falseLabel+'\n';
-                    code<<onTheFly;
+                    //$$->code += "\tJMP "+falseLabel+'\n';
+                   // onTheFly = "\tJMP "+falseLabel+'\n';
+                    //code<<onTheFly;
 
-                    $$->code += trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
-                    onTheFly = trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
-                    code<<onTheFly;
-                    $$->code += falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
-                    onTheFly = falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
-                    code<<onTheFly;
+                    // $$->code += trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
+                    // onTheFly = trueLable+":\n\tMOV AX , 1\n\tJMP "+generalLabel+"\n";
+                    // code<<onTheFly;
+                    // $$->code += falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
+                    // onTheFly = falseLabel+":\n\tMOV AX , 0\n"+generalLabel+":\n";
+                    //code<<onTheFly;
                 }
                 
                 ;
@@ -1240,6 +1291,7 @@ simple_expression: term
 
                     //.......ICG
                     $$->code = $1->code;
+
                 }
                 | simple_expression {code<<"\tMOV DX,AX\n";} ADDOP term  
                 {

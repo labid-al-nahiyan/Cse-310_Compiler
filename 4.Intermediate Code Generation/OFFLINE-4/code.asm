@@ -2,6 +2,9 @@ main PROC
 	MOV AX,@DATA
 	MOV DS,AX
 	PUSH BP
+	PUSH AX
+	PUSH DX
+	PUSH CX
 	MOV BP,SP
 	SUB SP,2
 	SUB SP,2
@@ -9,117 +12,78 @@ main PROC
 	SUB SP,2
 	SUB SP,2
 	SUB SP,2
-	MOV AX,i
-	MOV AX,1
-	MOV i, AX
-	PUSH AX
-	MOV AX,i
-
-	CALL printnumber
-	CALL NEWLINE
-	POP AX
-	MOV AX,j
-	MOV AX,5
-	MOV DX,AX
-	MOV AX,8
-	ADD DX,AX
-	PUSH DX
-	POP AX ;always keep first part of expression in AX then move it to DX
-	MOV j, AX
-	PUSH AX
-	MOV AX,j
-
-	CALL printnumber
-	CALL NEWLINE
-	POP AX
 	MOV AX,[BP-2]
-	MOV AX,i
-	MOV DX,AX
-	MOV AX,j
-	ADD DX,AX
-	PUSH DX
-	POP AX ;always keep first part of expression in AX then move it to DX
-	MOV DX,AX
-	MOV AX,[BP-10]
-	ADD DX,AX
-	PUSH DX
-	POP AX ;always keep first part of expression in AX then move it to DX
+	MOV AX,0
 	MOV [BP-2],AX
+
+	L1:
+	MOV AX,[BP-2]
+	PUSH AX
+	MOV AX,10
+	MOV DX, AX
+	POP AX
+	CMP AX,DX
+	JL L2
+
+JMP L3
+
+	L2:
 	PUSH AX
 	MOV AX,[BP-2]
 
 	CALL printnumber
 	CALL NEWLINE
 	POP AX
-	MOV AX,[BP-8]
+	MOV AX,[BP-6]
+	MOV AX,0
+	MOV [BP-6],AX
+
+	L4: 
+	MOV AX,[BP-6]
+	PUSH AX
+	MOV AX,5
+	MOV DX, AX
+	POP AX
+	CMP AX,DX
+	JL L6
+
+JMP L7
+
+	L5:
 	MOV AX,[BP-6]
 	PUSH AX
 	INC AX
 	MOV [BP-6],AX
 	POP AX
-	MOV [BP-8],AX
+
+	JMP L4
+L6: 
 	PUSH AX
-	MOV AX,[BP-8]
+	MOV AX,[BP-6]
 
 	CALL printnumber
 	CALL NEWLINE
 	POP AX
-	MOV AX,[BP-10]
-	MOV AX,i
-	MOV [BP-10],AX
+	ADD SP,0
+JMP L5
+	
+L7:
+	MOV AX,[BP-2]
 	PUSH AX
-	MOV AX,[BP-10]
+	INC AX
+	MOV [BP-2],AX
+	POP AX
+	ADD SP,0
 
-	CALL printnumber
-	CALL NEWLINE
-	POP AX
-	MOV AX,[BP-12]
-	MOV AX,[BP-8]
-	PUSH AX
-	MOV AX,[BP-10]
-	MOV DX, AX
-	POP AX
-	CMP AX,DX
-	JE L1
-	JMP L2
-L1:
-	MOV AX , 1
-	JMP L3
-L2:
-	MOV AX , 0
+	 JMP L1
 L3:
-	MOV [BP-12],AX
-	PUSH AX
-	MOV AX,[BP-12]
-
-	CALL printnumber
-	CALL NEWLINE
-	POP AX
-	MOV AX,[BP-12]
-	MOV AX,[BP-8]
-	PUSH AX
-	MOV AX,[BP-10]
-	MOV DX, AX
-	POP AX
-	CMP AX,DX
-	JL L4
-	JMP L5
-L4:
-	MOV AX , 1
-	JMP L6
-L5:
-	MOV AX , 0
-L6:
-	MOV [BP-12],AX
-	PUSH AX
-	MOV AX,[BP-12]
-
-	CALL printnumber
-	CALL NEWLINE
-	POP AX
-	MOV AX,0
 	ADD SP,12
-	MOV AH, 4CH
+
+	POP CX
+	POP DX
+	POP AX
+	POP BP
+		MOV AH, 4CH
 	INT 21H
 main ENDP
 END main
